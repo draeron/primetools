@@ -20,11 +20,14 @@ func ExpandHomePath(path string) string {
 }
 
 func Exists(path string) bool {
+	// if runtime.GOOS == "windows" {
+	// 	path = filepath.FromSlash(path)
+	// }
 	_, err := os.Stat(path)
-	return os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
-func SanitizePath(path string) string {
+func NormalizePath(path string) string {
 	path = filepath.ToSlash(path)
 	if runtime.GOOS == "windows" {
 		path = strings.ToLower(path)

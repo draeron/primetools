@@ -6,13 +6,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/tdsh/itunes-win/itunes"
+
+	"github.com/draeron/itunes-win/itunes"
+	"primetools/pkg/files"
 )
 
 type writer struct {
-	app *itunes.ITunes
+	app    *itunes.ITunes
 	tracks map[string]*itunes.Track
-	mutex sync.Mutex
+	mutex  sync.Mutex
 }
 
 func createWriter() (*writer, error) {
@@ -55,12 +57,6 @@ func (w *writer) load() {
 		return
 	}
 
-	// t, err := tracks.GetTrackByName("m:\\techno\\-= prog.tek =-\\animal trainer\\animal trainer - euphorie .mp3")
-	// if t != nil {
-	// 	loc, _ := t.GetLocation()
-	// 	println(loc)
-	// }
-
 	w.tracks = map[string]*itunes.Track{}
 	count, err := tracks.GetCount()
 	// note: index start at 1
@@ -68,7 +64,6 @@ func (w *writer) load() {
 		track, err := tracks.GetTrackByIndex(i)
 		if err != nil {
 			logrus.Errorf("tracks.GetTrackByIndex(%d): %v", i, err)
-			// todo: print error?
 			continue
 		}
 
@@ -85,28 +80,60 @@ func (w *writer) load() {
 			logrus.Errorf("track.GetLocation: %v", err)
 			continue
 		}
-		w.tracks[convertPath(loc)] = track
+		w.tracks[normalizePath(loc)] = track
 	}
 
 	logrus.Infof("iTunes COM data loaded in %s", time.Since(start))
 }
 
-func (w *writer) rating(location string, rating int) error {
-	w.load()
-	t, ok := w.tracks[location]
-	if !ok {
-		return errors.Errorf("track with location '%s' was not found in iTunes", location)
+func (w *writer) addFile(path string) error {
+	if !files.Exists(path) {
+		return errors.Errorf("file '%s' doesn't exists", path)
 	}
 
-	return t.SetAlbumRating(rating * 20)
+	lib, err := w.app.GetMainPlaylist()
+	if err != nil {
+		return errors.Wrapf(err, "itunes.GetMainPlaylist()")
+	}
+
+	return lib.AddFile(path)
 }
 
-func (w *writer) playCount(location string, count int) error {
-	w.load()
-	location = convertPath(location)
-	t, ok := w.tracks[location]
-	if !ok {
-		return errors.Errorf("track with location '%s' was not found in iTunes", location)
+func (w *writer) track(pid string) (*itunes.Track, error) {
+	lib, err := w.app.GetMainPlaylist()
+	if err != nil {
+		return nil, errors.Wrapf(err, "itunes.GetMainPlaylist()")
 	}
-	return t.SetPlayedCount(count)
+
+	tracks, err := lib.GetTracks()
+	if err != nil {
+		return nil, errors.Wrapf(err, "playlist.GetMainPlaylist()")
+	}
+
+	track, err := tracks.GetTrackByPersistentID(pid)
+	if err != nil {
+		return nil, errors.Wrapf(err, "playlist.GetTrackByPersistentID(%s)", pid)
+	}
+
+	if track.IsNil() {
+		return nil, errors.Errorf("not track found for pid '%s'", pid)
+	}
+
+	return track, nil
+}
+
+func (w *writer) setRating(pid string, rating int) error {
+	track, err := w.track(pid)
+	if err != nil {
+		return err
+	}
+	return track.SetRating(rating)
+}
+
+func (w *writer) setPlayCount(pid string, count int) error {
+	track, err := w.track(pid)
+	if err != nil {
+		return err
+	}
+	return track.SetPlayedCount(count)
 }
