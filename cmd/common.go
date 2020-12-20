@@ -18,17 +18,17 @@ const (
 
 var (
 	SourceFlag = &cli.StringFlag{
-		Name:     Source,
-		Aliases:  []string{"s"},
+		Name:    Source,
+		Aliases: []string{"s"},
 		// Required: true,
-		Value:    "itunes",
+		Value: "itunes",
 	}
 
 	TargetFlag = &cli.StringFlag{
-		Name:     Target,
-		Aliases:  []string{"t"},
+		Name:    Target,
+		Aliases: []string{"t"},
 		// Required: true,
-		Value:    "prime",
+		Value: "prime",
 	}
 
 	DryrunFlag = &cli.BoolFlag{

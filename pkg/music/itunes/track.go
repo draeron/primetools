@@ -1,6 +1,7 @@
 package itunes
 
 import (
+	"html"
 	"time"
 
 	"github.com/dhowden/itl"
@@ -11,11 +12,17 @@ import (
 
 type Track struct {
 	itrack itl.Track
-	writer *writer
+	lib *Itunes
+}
+
+func (i *Itunes) newTrack(track itl.Track) music.Track {
+	return Track{
+		itrack: track,
+	}
 }
 
 func (t Track) String() string {
-	return t.itrack.Name
+	return html.UnescapeString(t.itrack.Name)
 }
 
 func (t Track) PlayCount() int {
@@ -34,7 +41,15 @@ func (t Track) FilePath() string {
 }
 
 func (t Track) Added() time.Time {
-	return t.itrack.DateAdded
+	return t.itrack.DateAdded.UTC()
+}
+
+func (t Track) Modified() time.Time {
+	return t.itrack.DateModified.UTC()
+}
+
+func (t Track) SetModified(added time.Time) error {
+	return errors.New("cannot set modified date in iTunes")
 }
 
 func (t Track) SetAdded(added time.Time) error {
@@ -42,9 +57,9 @@ func (t Track) SetAdded(added time.Time) error {
 }
 
 func (t Track) SetRating(rating music.Rating) error {
-	return t.writer.setRating(t.itrack.PersistentID, int(rating)*20)
+	return t.lib.getCreateWriter().setRating(t.itrack.PersistentID, int(rating)*20)
 }
 
 func (t Track) SetPlayCount(count int) error {
-	return t.writer.setPlayCount(t.itrack.PersistentID, count)
+	return t.lib.getCreateWriter().setPlayCount(t.itrack.PersistentID, count)
 }

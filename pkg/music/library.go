@@ -10,7 +10,6 @@ type Library interface {
 	AddFile(path string) error
 	Track(filename string) Track
 
-	// Channel to iterate through all tracks
 	ForEachTrack(fct EachTrackFunc) error
 
 	fmt.Stringer
@@ -21,6 +20,9 @@ type EachTrackFunc func(index int, total int, track Track) error
 type Track interface {
 	Rating() Rating
 	SetRating(rating Rating) error
+
+	Modified() time.Time
+	SetModified(modified time.Time) error
 
 	Added() time.Time
 	SetAdded(added time.Time) error

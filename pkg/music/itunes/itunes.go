@@ -2,6 +2,7 @@ package itunes
 
 import (
 	"fmt"
+	"html"
 	"net/url"
 	"os"
 	"strings"
@@ -55,11 +56,6 @@ func Open(path string) (music.Library, error) {
 
 	i.itllib = &xml
 
-	i.writer, err = createWriter()
-	if err != nil {
-		logrus.Errorf("failed to init iTunes writer interface, writes operations will fail: %v", err)
-	}
-
 	return i, nil
 }
 
@@ -84,6 +80,9 @@ func (i *Itunes) Track(filename string) music.Track {
 func (i *Itunes) ForEachTrack(fct music.EachTrackFunc) error {
 	count := 0
 	for _, it := range i.tracks {
+		if !strings.HasPrefix(it.Location, "file://") {
+			continue
+		}
 		count++
 		if e := fct(count, len(i.tracks), i.newTrack(it)); e != nil {
 			return e
@@ -92,21 +91,29 @@ func (i *Itunes) ForEachTrack(fct music.EachTrackFunc) error {
 	return nil
 }
 
-func (i *Itunes) String() string {
-	return i.info
+func (i *Itunes) getCreateWriter() *writer {
+	if i.writer != nil {
+		return i.writer
+	}
+
+	var err error
+	i.writer, err = createWriter()
+	if err != nil {
+		logrus.Errorf("failed to init iTunes writer interface, writes operations will fail: %v", err)
+		panic(err)
+	}
+	return i.writer
 }
 
-func (i *Itunes) newTrack(track itl.Track) music.Track {
-	return Track{
-		itrack: track,
-		writer: i.writer,
-	}
+func (i *Itunes) String() string {
+	return i.info
 }
 
 // file://localhost/m:/Techno/-=%20Ambient%20=-/Bluetech/2005%20-%20Sines%20And%20Singularities/01%20-%20Enter%20The%20Lovely.mp3
 func normalizePath(path string) string {
 	path = strings.Replace(path, "file://localhost/", "", 1)
 	path, _ = url.PathUnescape(path)
+	path = html.UnescapeString(path)
 	path = files.NormalizePath(path)
 	return path
 }

@@ -8,6 +8,7 @@ import (
 	"primetools/pkg/music"
 	"primetools/pkg/music/files"
 	"primetools/pkg/music/itunes"
+	"primetools/pkg/music/prime"
 )
 
 const (
@@ -36,7 +37,7 @@ func Open(arg string) (music.Library, error) {
 	case ITunes:
 		return itunes.Open(path)
 	case Prime:
-		return nil, nil
+		return prime.Open(path)
 	case Files:
 		return files.Open(path), nil
 	default:

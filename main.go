@@ -10,6 +10,7 @@ import (
 	"primetools/cmd"
 	"primetools/cmd/fix"
 	"primetools/cmd/sync"
+	"primetools/pkg/options"
 )
 
 func main() {
@@ -23,10 +24,15 @@ func main() {
 		Name:    "primetools",
 		Usage:   cmd.Usage,
 		Version: "0.1.0",
-		Action:  run,
 		Commands: []*cli.Command{
 			sync.Cmd(),
 			fix.Cmd(),
+		},
+		Before: func(context *cli.Context) error {
+			if context.Bool(cmd.Dryrun) {
+				options.SetDryRun()
+			}
+			return nil
 		},
 	}
 	app.Setup()
@@ -35,8 +41,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func run(c *cli.Context) error {
-	return nil
 }

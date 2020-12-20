@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bogem/id3v2"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/djherbis/times.v1"
 
@@ -50,6 +51,21 @@ func (t Track) SetRating(rating music.Rating) error {
 	return nil
 }
 
+func (t Track) Modified() time.Time {
+	tim, err := times.Stat(t.path)
+	if err != nil {
+		logrus.Errorf("failed to get creation time for file %s: %v", t.path, err)
+		return time.Time{}
+	}
+	return tim.ModTime()
+}
+
+func (t Track) SetModified(modified time.Time) error {
+	msg := "SetRating for file not implemented"
+	logrus.Error(msg)
+	return errors.New(msg)
+}
+
 func (t Track) Added() time.Time {
 	tim, err := times.Stat(t.path)
 	if err != nil {
@@ -60,11 +76,11 @@ func (t Track) Added() time.Time {
 }
 
 func (t Track) PlayCount() int {
-	panic("implement me")
+	panic("Playcount not implemented for files")
 }
 
 func (t Track) SetPlayCount(count int) error {
-	panic("implement me")
+	panic("Playcount not implemented for files")
 }
 
 func (t Track) FilePath() string {
