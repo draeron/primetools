@@ -17,15 +17,19 @@ import (
 )
 
 type Itunes struct {
-	itllib *itl.Library
-	tracks map[string]itl.Track
-	writer *writer
-	info   string
+	itllib        *itl.Library
+	tracks        map[string]itl.Track
+	trackPerId    map[int]itl.Track
+	playlistPerId map[string]itl.Playlist
+	writer        *writer
+	info          string
 }
 
 func Open(path string) (music.Library, error) {
 	i := &Itunes{
-		tracks: map[string]itl.Track{},
+		tracks:     map[string]itl.Track{},
+		trackPerId: map[int]itl.Track{},
+		playlistPerId: map[string]itl.Playlist{},
 	}
 
 	if path == "" {
@@ -48,6 +52,11 @@ func Open(path string) (music.Library, error) {
 
 	for _, t := range xml.Tracks {
 		i.tracks[normalizePath(t.Location)] = t
+		i.trackPerId[t.TrackID] = t
+	}
+
+	for _, p := range xml.Playlists {
+		i.playlistPerId[p.PlaylistPersistentID] = p
 	}
 
 	i.info = fmt.Sprintf("iTunes: App Version: %v, Lib Version: %v.%v, Track Count: %d", xml.ApplicationVersion, xml.MajorVersion, xml.MinorVersion, len(xml.Tracks))
@@ -89,6 +98,27 @@ func (i *Itunes) ForEachTrack(fct music.EachTrackFunc) error {
 		}
 	}
 	return nil
+}
+
+func (i *Itunes) Crates() []music.Tracklist {
+	// in itunes, a crate is also a playlist
+	return i.Playlists()
+}
+
+func (i *Itunes) Playlists() []music.Tracklist {
+	out := []music.Tracklist{}
+	for _, playlist := range i.itllib.Playlists {
+		// only include music playlists
+		if playlist.DistinguishedKind != 0 || playlist.Name == "Library" || playlist.Folder {
+			continue
+		}
+
+		out = append(out, Playlist{
+			plist: playlist,
+			lib:   i,
+		})
+	}
+	return out
 }
 
 func (i *Itunes) getCreateWriter() *writer {

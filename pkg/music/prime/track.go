@@ -1,6 +1,7 @@
 package prime
 
 import (
+	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,6 +17,7 @@ type Track struct {
 	metaStrings metaStringEntries
 	metaInts    metaIntEntries
 	sql         *sqlx.DB
+	mutex       sync.Mutex
 }
 
 func newTrack(sql *sqlx.DB, entry trackEntry) *Track {
@@ -77,7 +79,21 @@ func (t *Track) SetPlayCount(count int) error {
 }
 
 func (t *Track) FilePath() string {
-	return files.NormalizePath(t.entry.Path)
+	return files.NormalizePath(t.entry.Path.String)
+}
+
+func (t *Track) Title() string {
+	t.readMetaString()
+	return t.metaStrings.Title()
+}
+
+func (t *Track) Album() string {
+	t.readMetaString()
+	return t.metaStrings.Album()
+}
+
+func (t *Track) Year() int {
+	return int(t.entry.Year.Int32)
 }
 
 func (t *Track) String() string {
@@ -106,6 +122,8 @@ func (t *Track) writeMetaInt(meta MetaIntType, value int64) error {
 }
 
 func (t *Track) readMetaString() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	if len(t.metaStrings) > 0 {
 		return
 	}
@@ -118,6 +136,8 @@ func (t *Track) readMetaString() {
 }
 
 func (t *Track) readMetaInts() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	if len(t.metaInts) > 0 {
 		return
 	}

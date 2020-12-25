@@ -10,6 +10,9 @@ type Library interface {
 	AddFile(path string) error
 	Track(filename string) Track
 
+	Playlists() []Tracklist
+	Crates() []Tracklist
+
 	ForEachTrack(fct EachTrackFunc) error
 
 	fmt.Stringer
@@ -18,6 +21,10 @@ type Library interface {
 type EachTrackFunc func(index int, total int, track Track) error
 
 type Track interface {
+	Title() string
+	Album() string
+	Year() int
+
 	Rating() Rating
 	SetRating(rating Rating) error
 
@@ -35,6 +42,8 @@ type Track interface {
 	fmt.Stringer
 }
 
-type Playlist interface {
+type Tracklist interface {
+	Name() string
+	Path() string
 	Tracks() []Track
 }

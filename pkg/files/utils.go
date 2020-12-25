@@ -47,7 +47,7 @@ func RemoveAccent(path string) string {
 
 /*
 	Find the absolute path, with forward slash and on windows, with lowercase
- */
+*/
 func NormalizePath(path string) string {
 	path, _ = filepath.Abs(path)
 	path = filepath.ToSlash(path)

@@ -5,14 +5,25 @@ import (
 )
 
 type trackEntry struct {
-	Id        int           `db:"id"`
-	Length    int           `db:"length"`
-	BPM       sql.NullInt32 `db:"bpm"`
-	Year      sql.NullInt32 `db:"year"`
-	Path      string        `db:"path"`
-	Filename  string        `db:"filename"`
-	Bitrate   int           `db:"bitrate"`
-	TrackType int           `db:"trackType"`
+	Id        int            `db:"id"`
+	Length    int            `db:"length"`
+	BPM       sql.NullInt32  `db:"bpm"`
+	Year      sql.NullInt32  `db:"year"`
+	Path      sql.NullString `db:"path"`
+	Filename  string         `db:"filename"`
+	Bitrate   int            `db:"bitrate"`
+	TrackType int            `db:"trackType"`
+}
+
+type listEntry struct {
+	Id         int            `db:"id"`
+	Type       ListType       `db:"type"`
+	Title      string         `db:"title"`
+	Path       sql.NullString `db:"path"`
+	TrackCount int            `db:"trackCount"`
+}
+
+type listItemEntry struct {
 }
 
 type infoEntry struct {
@@ -36,6 +47,14 @@ type metaIntEntry struct {
 
 type metaStringEntries []metaStringEntry
 type metaIntEntries []metaIntEntry
+
+func (m metaStringEntries) Title() string {
+	return m.Get(MetaTitle)
+}
+
+func (m metaStringEntries) Album() string {
+	return m.Get(MetaAlbum)
+}
 
 func (m metaStringEntries) Get(typed MetaStringType) string {
 	for _, it := range m {

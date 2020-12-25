@@ -6,7 +6,7 @@ require (
 	github.com/bogem/id3v2 v1.2.0
 	github.com/dhowden/itl v0.0.0-20170329215456-9fbe21093131
 	github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a // indirect
-	github.com/draeron/itunes-win v0.1.1 // indirect
+	github.com/draeron/itunes-win v0.1.1
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mattn/go-sqlite3 v1.14.5

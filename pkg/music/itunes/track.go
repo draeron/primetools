@@ -12,7 +12,7 @@ import (
 
 type Track struct {
 	itrack itl.Track
-	lib *Itunes
+	lib    *Itunes
 }
 
 func (i *Itunes) newTrack(track itl.Track) music.Track {
@@ -62,4 +62,16 @@ func (t Track) SetRating(rating music.Rating) error {
 
 func (t Track) SetPlayCount(count int) error {
 	return t.lib.getCreateWriter().setPlayCount(t.itrack.PersistentID, count)
+}
+
+func (t Track) Title() string {
+	return html.UnescapeString(t.itrack.Name)
+}
+
+func (t Track) Album() string {
+	return html.UnescapeString(t.itrack.Album)
+}
+
+func (t Track) Year() int {
+	return t.itrack.Year
 }

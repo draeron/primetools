@@ -17,10 +17,10 @@ import (
 )
 
 type Prime struct {
-	origin string
-	info   string
-	sql    *sqlx.DB
-	total  int
+	origin   string
+	info     string
+	sql      *sqlx.DB
+	total    int
 	trackIds map[string]int
 }
 
@@ -69,7 +69,7 @@ func Open(path string) (music.Library, error) {
 		return nil, errors.Wrapf(err, "failed to fetch track ids")
 	}
 	for _, e := range entries {
-		fpath := files.NormalizePath(p.origin + "/" + e.Path)
+		fpath := files.NormalizePath(p.origin + "/" + e.Path.String)
 		fpath = files.RemoveAccent(fpath)
 		p.trackIds[fpath] = e.Id
 	}
@@ -85,6 +85,40 @@ func (l *Prime) Close() {
 		l.sql.Close()
 	}
 	logrus.Info("PRIME library closed")
+}
+
+func (l *Prime) Playlists() []music.Tracklist {
+	return l.fetchList(ListPlayList)
+}
+
+func (l *Prime) Crates() []music.Tracklist {
+	return l.fetchList(ListCrate)
+}
+
+func (l *Prime) fetchList(listType ListType) []music.Tracklist {
+	list, err := l.fetchListEntries(listType)
+	if err != nil {
+		logrus.Errorf("failed to fetch crates from PRIME database: %v", err)
+		return nil
+	}
+
+	out := []music.Tracklist{}
+	for _, it := range list {
+		out = append(out, newList(l.sql, it))
+	}
+	return out
+}
+
+func (l *Prime) fetchListEntries(listType ListType) ([]listEntry, error) {
+	list := []listEntry{}
+
+	query := `SELECT id, type, title, path, trackCount FROM List WHERE type = ? AND isFolder = false`
+	err := l.sql.Select(&list, query, listType)
+	if err != nil {
+		return nil, errors.Wrapf(err, "")
+	}
+
+	return list, err
 }
 
 func (l *Prime) AddFile(path string) error {

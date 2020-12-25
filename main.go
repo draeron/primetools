@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
+	"primetools/cmd/dump"
 	"primetools/cmd/fix"
 	"primetools/cmd/sync"
 	"primetools/pkg/options"
@@ -27,6 +28,7 @@ func main() {
 		Commands: []*cli.Command{
 			sync.Cmd(),
 			fix.Cmd(),
+			dump.Cmd(),
 		},
 		Before: func(context *cli.Context) error {
 			if context.Bool(cmd.Dryrun) {

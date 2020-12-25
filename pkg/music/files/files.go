@@ -27,7 +27,16 @@ func Open(path string) music.Library {
 }
 
 func (f Files) Close() {
+}
 
+func (f Files) Crates() []music.Tracklist {
+	logrus.Warn("there cannot be any crates in files")
+	return nil
+}
+
+func (f Files) Playlists() []music.Tracklist {
+	logrus.Warn("there cannot be any playlist in files")
+	return nil
 }
 
 func (f Files) AddFile(path string) error {
@@ -46,8 +55,8 @@ func (f Files) Track(filename string) music.Track {
 		return cached
 	}
 
-	t := Track{ppath}
-	f.cache[ppath] = &t
+	t := &Track{path: ppath}
+	f.cache[ppath] = t
 	return t
 }
 
