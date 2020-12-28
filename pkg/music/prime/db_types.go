@@ -5,14 +5,17 @@ import (
 )
 
 type trackEntry struct {
-	Id        int            `db:"id"`
-	Length    int            `db:"length"`
-	BPM       sql.NullInt32  `db:"bpm"`
-	Year      sql.NullInt32  `db:"year"`
-	Path      sql.NullString `db:"path"`
-	Filename  string         `db:"filename"`
-	Bitrate   int            `db:"bitrate"`
-	TrackType int            `db:"trackType"`
+	Id           int            `db:"id"`
+	Length       int            `db:"length"`
+	BPM          sql.NullInt32  `db:"bpm"`
+	Year         sql.NullInt32  `db:"year"`
+	Path         sql.NullString `db:"path"`
+	Filename     string         `db:"filename"`
+	Bitrate      int            `db:"bitrate"`
+	External     sql.NullBool   `db:"isExternalTrack"`
+	ExternalId   sql.NullInt32  `db:"idTrackInExternalDatabase"`
+	ExternalDbId sql.NullString `db:"uuidOfExternalDatabase"`
+	// TrackType  int            `db:"trackType"`
 }
 
 type listEntry struct {
@@ -27,10 +30,11 @@ type listItemEntry struct {
 }
 
 type infoEntry struct {
-	Id                 int `db:"id"`
-	SchemaVersionMajor int `db:"schemaVersionMajor"`
-	SchemaVersionMinor int `db:"schemaVersionMinor"`
-	SchemaVersionPatch int `db:"schemaVersionPatch"`
+	Id                 int    `db:"id"`
+	UUID               string `db:"uuid"`
+	SchemaVersionMajor int    `db:"schemaVersionMajor"`
+	SchemaVersionMinor int    `db:"schemaVersionMinor"`
+	SchemaVersionPatch int    `db:"schemaVersionPatch"`
 }
 
 type metaStringEntry struct {

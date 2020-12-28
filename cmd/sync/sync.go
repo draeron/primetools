@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -9,24 +10,16 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
+	"primetools/pkg/enums"
 	"primetools/pkg/music"
 )
 
-type SyncType string
-
-const (
-	Ratings   = SyncType("ratings")
-	Added     = SyncType("added")
-	Modified  = SyncType("modified")
-	PlayCount = SyncType("playcount")
-)
-
 var (
-	SyncTypes = []SyncType{
-		Ratings,
-		Added,
-		Modified,
-		PlayCount,
+	SyncTypes = []enums.SyncType{
+		enums.Ratings,
+		enums.Added,
+		enums.Modified,
+		enums.PlayCount,
 	}
 
 	flags = []cli.Flag{
@@ -46,19 +39,19 @@ func Cmd() *cli.Command {
 		HideHelp:    true,
 		Description: "sync assets from a source to a destination",
 		Subcommands: []*cli.Command{
-			newType(Ratings),
-			newType(Added),
-			newType(PlayCount),
-			newType(Modified),
+			newSub(enums.Ratings),
+			newSub(enums.Added),
+			newSub(enums.Modified),
+			newSub(enums.PlayCount),
 		},
 		Flags: flags,
 		// Before: before,
 	}
 }
 
-func newType(syncType SyncType) *cli.Command {
+func newSub(syncType enums.SyncType) *cli.Command {
 	return &cli.Command{
-		Name:      string(syncType),
+		Name:      strings.ToLower(syncType.String()),
 		UsageText: "",
 		Action:    exec,
 		Flags:     flags,
@@ -66,17 +59,6 @@ func newType(syncType SyncType) *cli.Command {
 		HideHelpCommand: true,
 	}
 }
-
-// func before(context *cli.Context) error {
-// 	switch SyncType(context.Command.Name) {
-// 	case Ratings:
-// 	case PlayCount:
-// 	case Added:
-// 	default:
-// 		return errors.New("suported type: " + context.Args().First())
-// 	}
-// 	return nil
-// }
 
 func exec(context *cli.Context) error {
 	src, err := cmd.OpenSource(context)
@@ -101,7 +83,7 @@ func exec(context *cli.Context) error {
 	err = src.ForEachTrack(func(index int, total int, track music.Track) error {
 		count++
 
-		// if strings.Contains(track.String(), "Mermaid") {
+		// if strings.Contains(track.String(), "Troja Átma") {
 		// 	logrus.Print(track.String())
 		// }
 
@@ -111,8 +93,13 @@ func exec(context *cli.Context) error {
 			return nil
 		}
 
-		switch SyncType(context.Command.Name) {
-		case Modified:
+		stype, err := enums.ParseSyncType(context.Command.Name)
+		if err != nil {
+			return err
+		}
+
+		switch stype {
+		case enums.Modified:
 			if tt.Modified() != track.Modified() {
 				changed++
 				msg := fmt.Sprintf("updating modified for '%s': %v => %v", track, tt.Modified().Format(time.RFC822), track.Modified().Format(time.RFC822))
@@ -127,7 +114,7 @@ func exec(context *cli.Context) error {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
-		case Added:
+		case enums.Added:
 			if tt.Added() != track.Added() {
 				changed++
 				msg := fmt.Sprintf("updating added for '%s': %v => %v", track, tt.Added().Format(time.RFC822), track.Added().Format(time.RFC822))
@@ -142,7 +129,7 @@ func exec(context *cli.Context) error {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
-		case PlayCount:
+		case enums.PlayCount:
 			if tt.PlayCount() != track.PlayCount() {
 				changed++
 				msg := fmt.Sprintf("updating play count for '%s': %v => %v", track, tt.PlayCount(), track.PlayCount())
@@ -157,7 +144,7 @@ func exec(context *cli.Context) error {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
-		case Ratings:
+		case enums.Ratings:
 			if tt.Rating() != track.Rating() {
 				changed++
 				msg := fmt.Sprintf("updating rating for '%s': %v => %v", track, tt.Rating(), track.Rating())

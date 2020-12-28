@@ -3,7 +3,6 @@ package prime
 import (
 	"strings"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 
 	"primetools/pkg/music"
@@ -11,13 +10,13 @@ import (
 
 type TrackList struct {
 	entry listEntry
-	sql   *sqlx.DB
+	src   *PrimeDB
 }
 
-func newList(sql *sqlx.DB, entry listEntry) *TrackList {
+func newList(src *PrimeDB, entry listEntry) *TrackList {
 	return &TrackList{
 		entry: entry,
-		sql: sql,
+		src:   src,
 	}
 }
 
@@ -32,11 +31,10 @@ func (t TrackList) Path() string {
 }
 
 func (t *TrackList) Tracks() []music.Track {
-
 	tracks := []trackEntry{}
 	query := `select * from ListTrackList join Track ON Track.id = ListTrackList.trackId WHERE listId = ? ORDER BY trackNumber`
 
-	err := t.sql.Unsafe().Select(&tracks, query, t.entry.Id)
+	err := t.src.sql.Unsafe().Select(&tracks, query, t.entry.Id)
 	if err != nil {
 		logrus.Errorf("fail to fetch track list for playlist '%s': %v", t.Name(), err)
 		return nil
@@ -44,8 +42,7 @@ func (t *TrackList) Tracks() []music.Track {
 
 	out := []music.Track{}
 	for _, it := range tracks {
-		out = append(out, newTrack(t.sql, it))
+		out = append(out, newTrack(t.src, it))
 	}
 	return out
 }
-

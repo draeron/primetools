@@ -16,13 +16,13 @@ type Track struct {
 	entry       trackEntry
 	metaStrings metaStringEntries
 	metaInts    metaIntEntries
-	sql         *sqlx.DB
+	src         *PrimeDB
 	mutex       sync.Mutex
 }
 
-func newTrack(sql *sqlx.DB, entry trackEntry) *Track {
+func newTrack(src *PrimeDB, entry trackEntry) *Track {
 	return &Track{
-		sql:         sql,
+		src:         src,
 		entry:       entry,
 		metaStrings: metaStringEntries{},
 		metaInts:    metaIntEntries{},
@@ -36,7 +36,7 @@ func (t *Track) Rating() music.Rating {
 }
 
 func (t *Track) SetRating(rating music.Rating) error {
-	return t.writeMetaInt(MetaRating, int64(rating*20))
+	return t.writeMetaIntCascade(MetaRating, int64(rating*20))
 }
 
 func (t *Track) Added() time.Time {
@@ -51,7 +51,7 @@ func (t *Track) Added() time.Time {
 
 func (t *Track) Modified() time.Time {
 	t.readMetaInts()
-	atime := t.metaInts.Get(MetaModified)
+	atime := t.metaInts.Get(MetaCreated)
 	if atime == 0 {
 		return time.Now().UTC()
 	} else {
@@ -60,20 +60,20 @@ func (t *Track) Modified() time.Time {
 }
 
 func (t *Track) SetAdded(added time.Time) error {
-	return t.writeMetaInt(MetaAdded, added.Unix())
+	return t.writeMetaIntCascade(MetaAdded, added.Unix())
 }
 
 func (t *Track) SetModified(added time.Time) error {
-	return t.writeMetaInt(MetaModified, added.Unix())
+	return t.writeMetaIntCascade(MetaCreated, added.Unix())
 }
 
 func (t *Track) PlayCount() int {
-	logrus.Warnf("PlayCount is not implemented in Prime library")
+	logrus.Warnf("PlayCount is not implemented in Library library")
 	return 0
 }
 
 func (t *Track) SetPlayCount(count int) error {
-	msg := "PlayCount is not implemented in Prime library"
+	msg := "PlayCount is not implemented in Library library"
 	logrus.Warnf(msg)
 	return errors.New(msg)
 }
@@ -105,11 +105,25 @@ func (t *Track) String() string {
 	}
 }
 
-func (t *Track) writeMetaInt(meta MetaIntType, value int64) error {
+func (t *Track) writeMetaIntCascade(meta MetaIntType, value int64) error {
+	if err := writeMetaInt(t.src.sql, t.entry.Id, meta, value); err != nil {
+		return err
+	}
+	if t.entry.External.Bool && t.entry.ExternalDbId.Valid && t.entry.ExternalId.Valid {
+		if db, ok := t.src.lib.dbs[t.entry.ExternalDbId.String]; ok {
+			return writeMetaInt(db.sql, int(t.entry.ExternalId.Int32), meta, value)
+		} else {
+			// todo: log cannot find DB
+		}
+	}
+	return nil
+}
+
+func writeMetaInt(sql *sqlx.DB, trackId int, meta MetaIntType, value int64) error {
 	// query := `UPDATE MetaDataInteger SET value = ? WHERE id = ? AND type = ?`
 	query := `INSERT OR REPLACE INTO MetaDataInteger (value, id, type) VALUES (?, ?, ?)`
 
-	res, err := t.sql.Exec(query, value, t.entry.Id, meta)
+	res, err := sql.Exec(query, value, trackId, meta)
 	if err != nil {
 		return errors.Wrapf(err, "running query '%s'", query)
 	}
@@ -118,6 +132,7 @@ func (t *Track) writeMetaInt(meta MetaIntType, value int64) error {
 		return errors.Wrap(err, "getting affected row count")
 	}
 	logrus.Debugf("Query '%s' row affected: %d", query, count)
+
 	return nil
 }
 
@@ -129,9 +144,9 @@ func (t *Track) readMetaString() {
 	}
 
 	query := `select * from MetaData WHERE id = ?`
-	err := t.sql.Select(t.metaStrings, query, t.entry.Id)
+	err := t.src.sql.Select(&t.metaStrings, query, t.entry.Id)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("failed to read meta strings from sqlite: %v", err)
 	}
 }
 
@@ -143,9 +158,8 @@ func (t *Track) readMetaInts() {
 	}
 
 	query := `select * from MetaDataInteger WHERE id = ?`
-	err := t.sql.Select(&t.metaInts, query, t.entry.Id)
+	err := t.src.sql.Select(&t.metaInts, query, t.entry.Id)
 	if err != nil {
-		// todo: log errors?
-		logrus.Error(err)
+		logrus.Errorf("failed to read meta ints from sqlite: %v", err)
 	}
 }

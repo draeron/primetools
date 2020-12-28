@@ -10,7 +10,7 @@ import (
 
 type Playlist struct {
 	plist itl.Playlist
-	lib   *Itunes
+	lib   *Library
 }
 
 func (p Playlist) Path() string {

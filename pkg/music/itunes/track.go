@@ -12,10 +12,10 @@ import (
 
 type Track struct {
 	itrack itl.Track
-	lib    *Itunes
+	lib    *Library
 }
 
-func (i *Itunes) newTrack(track itl.Track) music.Track {
+func (i *Library) newTrack(track itl.Track) music.Track {
 	return Track{
 		itrack: track,
 	}

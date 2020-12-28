@@ -16,7 +16,7 @@ import (
 	"primetools/pkg/music"
 )
 
-type Itunes struct {
+type Library struct {
 	itllib        *itl.Library
 	tracks        map[string]itl.Track
 	trackPerId    map[int]itl.Track
@@ -26,9 +26,9 @@ type Itunes struct {
 }
 
 func Open(path string) (music.Library, error) {
-	i := &Itunes{
-		tracks:     map[string]itl.Track{},
-		trackPerId: map[int]itl.Track{},
+	i := &Library{
+		tracks:        map[string]itl.Track{},
+		trackPerId:    map[int]itl.Track{},
 		playlistPerId: map[string]itl.Playlist{},
 	}
 
@@ -51,7 +51,15 @@ func Open(path string) (music.Library, error) {
 	}
 
 	for _, t := range xml.Tracks {
-		i.tracks[normalizePath(t.Location)] = t
+		if t.Location == "" {
+			continue
+		}
+
+		location := normalizePath(t.Location)
+		if _, ok := i.tracks[location]; ok {
+			logrus.Warnf("file '%s' seems to be duplicated in itunes xml", location)
+		}
+		i.tracks[location] = t
 		i.trackPerId[t.TrackID] = t
 	}
 
@@ -68,25 +76,25 @@ func Open(path string) (music.Library, error) {
 	return i, nil
 }
 
-func (i *Itunes) Close() {
+func (i *Library) Close() {
 	if i.writer != nil {
 		i.writer.Close()
 	}
 	logrus.Info("iTunes library closed")
 }
 
-func (i *Itunes) AddFile(path string) error {
+func (i *Library) AddFile(path string) error {
 	return i.writer.addFile(path)
 }
 
-func (i *Itunes) Track(filename string) music.Track {
+func (i *Library) Track(filename string) music.Track {
 	if t, ok := i.tracks[files.NormalizePath(filename)]; ok {
 		return i.newTrack(t)
 	}
 	return nil
 }
 
-func (i *Itunes) ForEachTrack(fct music.EachTrackFunc) error {
+func (i *Library) ForEachTrack(fct music.EachTrackFunc) error {
 	count := 0
 	for _, it := range i.tracks {
 		if !strings.HasPrefix(it.Location, "file://") {
@@ -100,12 +108,12 @@ func (i *Itunes) ForEachTrack(fct music.EachTrackFunc) error {
 	return nil
 }
 
-func (i *Itunes) Crates() []music.Tracklist {
+func (i *Library) Crates() []music.Tracklist {
 	// in itunes, a crate is also a playlist
 	return i.Playlists()
 }
 
-func (i *Itunes) Playlists() []music.Tracklist {
+func (i *Library) Playlists() []music.Tracklist {
 	out := []music.Tracklist{}
 	for _, playlist := range i.itllib.Playlists {
 		// only include music playlists
@@ -121,7 +129,7 @@ func (i *Itunes) Playlists() []music.Tracklist {
 	return out
 }
 
-func (i *Itunes) getCreateWriter() *writer {
+func (i *Library) getCreateWriter() *writer {
 	if i.writer != nil {
 		return i.writer
 	}
@@ -135,7 +143,7 @@ func (i *Itunes) getCreateWriter() *writer {
 	return i.writer
 }
 
-func (i *Itunes) String() string {
+func (i *Library) String() string {
 	return i.info
 }
 

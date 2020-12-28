@@ -1,10 +1,16 @@
 package dump
 
 import (
+	"strings"
+	"time"
+
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
+	"primetools/pkg/enums"
+	"primetools/pkg/music"
 )
 
 var (
@@ -16,12 +22,30 @@ var (
 func Cmd() *cli.Command {
 	return &cli.Command{
 		Name:        "dump",
-		Action:      exec,
 		Usage:       cmd.Usage,
 		HideHelp:    true,
 		Description: "dump data about a library",
 		Flags:       flags,
+		Action: func(context *cli.Context) error {
+			return errors.Errorf("unknown sync type: %s", context.Args().First())
+		},
+		Subcommands: []*cli.Command{
+			newSub(enums.Tracks),
+			newSub(enums.Playlists),
+			newSub(enums.Crates),
+		},
 		// Before: before,
+	}
+}
+
+func newSub(syncType enums.ObjectType) *cli.Command {
+	return &cli.Command{
+		Name:      strings.ToLower(syncType.String()),
+		UsageText: "",
+		Action:    exec,
+		Flags:     flags,
+		// Hidden: true,
+		HideHelpCommand: true,
 	}
 }
 
@@ -32,30 +56,35 @@ func exec(context *cli.Context) error {
 	}
 	defer src.Close()
 
-	for _, playlist := range src.Playlists() {
-		tracks := playlist.Tracks()
-		logrus.Infof("%v (%d items)", playlist.Path(), len(tracks))
-
-		// for tcount, track := range tracks {
-		// 	logrus.Infof("  - %2d %s (%s)", tcount, track.Name(), track.FilePath())
-		// }
+	typ, err := enums.ParseObjectType(strings.ToLower(context.Command.Name))
+	if err != nil {
+		return err
 	}
 
-	// count := 0
-	// notfound := 0
-	// errorsc := 0
-	//
-	// start := time.Now()
+	switch typ {
+	case enums.Playlists,	enums.Crates:
+		playlists := []music.Tracklist{}
 
-	// err = src.ForEachTrack(func(index int, total int, track music.Track) error {
-	// 	count++
-	//
-	//
-	//
-	// 	return nil
-	// })
+		if typ == enums.Playlists {
+			playlists = src.Playlists()
+		} else {
+			playlists = src.Crates()
+		}
 
-	// logrus.Infof("parsed %d files, %d skipped, %d errors, %d not found, duration: %s",
-	// 	count, count-notfound, errorsc, notfound, time.Since(start))
+		for _, playlist := range playlists {
+			tracks := playlist.Tracks()
+			logrus.Infof("%v (%d items)", playlist.Path(), len(tracks))
+			// for tcount, track := range tracks {
+			// 	logrus.Infof("  - %2d %s (%s)", tcount, track.Name(), track.FilePath())
+			// }
+		}
+	case enums.Tracks:
+		logrus.Info("Tracks in library:")
+		err = src.ForEachTrack(func(index int, total int, track music.Track) error {
+			logrus.Infof("- '%s' | Rating: %v, Added: %s", track.Title(), track.Rating(), track.Added().Local().Format(time.ANSIC))
+			return nil
+		})
+		return err
+	}
 	return err
 }
