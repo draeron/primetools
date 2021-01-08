@@ -1,6 +1,7 @@
 package prime
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -25,9 +26,26 @@ func (t TrackList) Name() string {
 }
 
 func (t TrackList) Path() string {
-	path := strings.Replace(t.entry.Path.String, ";", "/", -1)
+	path := strings.Replace(t.entry.Path.String, "/", "|", -1)
+	path = strings.Replace(t.entry.Path.String, ";", "/", -1)
 	path = strings.TrimSuffix(path, "/")
 	return path
+}
+
+func (t TrackList) String() string {
+	names := []string{}
+	for _, track := range t.Tracks() {
+		names = append(names, track.String())
+	}
+	return "[" + strings.Join(names, ",") + "]"
+}
+
+func (t *TrackList) MarshalYAML() (interface{}, error) {
+	return music.TracklistToMarshal(t), nil
+}
+
+func (t *TrackList) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TracklistToMarshal(t))
 }
 
 func (t *TrackList) Tracks() []music.Track {

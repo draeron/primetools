@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
+	"primetools/pkg/enums"
 	"primetools/pkg/music"
 	"primetools/pkg/music/factory"
 )
@@ -17,18 +21,17 @@ const (
 )
 
 var (
-	SourceFlag = &cli.StringFlag{
+	SourceFlag = &cli.GenericFlag{
 		Name:    Source,
 		Aliases: []string{"s"},
-		// Required: true,
-		Value: "itunes",
+		Value: enums.ITunes.ToCliGeneric(),
 	}
 
-	TargetFlag = &cli.StringFlag{
+	TargetFlag = &cli.GenericFlag{
 		Name:    Target,
 		Aliases: []string{"t"},
 		// Required: true,
-		Value: "prime",
+		Value: enums.PRIME.ToCliGeneric(),
 	}
 
 	DryrunFlag = &cli.BoolFlag{
@@ -48,18 +51,24 @@ func CheckSourceAndTarget(context *cli.Context) error {
 	return nil
 }
 
-func open(context *cli.Context, flag string) (music.Library, error) {
+func open(context *cli.Context, flag string) music.Library {
 	if context.String(flag) == "" {
-		return nil, errors.Errorf("--%s cannot be empty", flag)
+		logrus.Errorf("--%s cannot be empty", flag)
+		os.Exit(1)
 	}
 
-	return factory.Open(context.String(flag))
+	lib, err := factory.Open(context.String(flag))
+	if err != nil {
+		logrus.Errorf("fail to open %s: %v", flag, err)
+		os.Exit(1)
+	}
+	return lib
 }
 
-func OpenTarget(context *cli.Context) (music.Library, error) {
+func OpenTarget(context *cli.Context) music.Library {
 	return open(context, Target)
 }
 
-func OpenSource(context *cli.Context) (music.Library, error) {
+func OpenSource(context *cli.Context) music.Library {
 	return open(context, Source)
 }

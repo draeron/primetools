@@ -1,20 +1,22 @@
 package prime
 
 import (
+	"encoding/json"
+
 	"primetools/pkg/music"
 )
 
 type CombinedTrackList struct {
-	name string
-	path string
+	name  string
+	path  string
 	lists []music.Tracklist
 }
 
 func newCombinedTracklist(list music.Tracklist) *CombinedTrackList {
 	c := CombinedTrackList{
-		name: list.Name(),
-		path: list.Path(),
-		lists: []music.Tracklist{ list },
+		name:  list.Name(),
+		path:  list.Path(),
+		lists: []music.Tracklist{list},
 	}
 	return &c
 }
@@ -34,6 +36,14 @@ func (c *CombinedTrackList) MergeWith(list music.Tracklist) *CombinedTrackList {
 	return c
 }
 
+func (t *CombinedTrackList) MarshalYAML() (interface{}, error) {
+	return music.TracklistToMarshal(t), nil
+}
+
+func (t *CombinedTrackList) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TracklistToMarshal(t))
+}
+
 func (c *CombinedTrackList) Tracks() []music.Track {
 	tracks := []music.Track{}
 	for _, pl := range c.lists {
@@ -41,4 +51,3 @@ func (c *CombinedTrackList) Tracks() []music.Track {
 	}
 	return tracks
 }
-

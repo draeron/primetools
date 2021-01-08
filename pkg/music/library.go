@@ -2,7 +2,6 @@ package music
 
 import (
 	"fmt"
-	"time"
 )
 
 type Library interface {
@@ -20,30 +19,25 @@ type Library interface {
 
 type EachTrackFunc func(index int, total int, track Track) error
 
-type Track interface {
-	Title() string
-	Album() string
-	Year() int
-
-	Rating() Rating
-	SetRating(rating Rating) error
-
-	Modified() time.Time
-	SetModified(modified time.Time) error
-
-	Added() time.Time
-	SetAdded(added time.Time) error
-
-	PlayCount() int
-	SetPlayCount(count int) error
-
-	FilePath() string
-
-	fmt.Stringer
-}
-
 type Tracklist interface {
 	Name() string
 	Path() string
 	Tracks() []Track
+}
+
+func TracklistToMarshal(list Tracklist) interface{} {
+	tracks := []trackJson{}
+	for _, track := range list.Tracks() {
+		val := TrackToMarshalObject(track)
+		tracks = append(tracks, val)
+	}
+	return struct {
+		Name string `json:"name"`
+		Path string `json:"path,omitempty"`
+		Tracks []trackJson
+	}{
+		Name:   list.Name(),
+		Path:   list.Path(),
+		Tracks: tracks,
+	}
 }

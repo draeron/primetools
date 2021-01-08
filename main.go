@@ -10,6 +10,7 @@ import (
 	"primetools/cmd"
 	"primetools/cmd/dump"
 	"primetools/cmd/fix"
+	_import "primetools/cmd/import"
 	"primetools/cmd/sync"
 	"primetools/pkg/options"
 )
@@ -19,6 +20,7 @@ func main() {
 		FullTimestamp: false,
 		ForceColors:   true,
 	})
+	log.SetOutput(logrus.New().Writer())
 
 	// app := cli.NewApp()
 	app := &cli.App{
@@ -29,6 +31,7 @@ func main() {
 			sync.Cmd(),
 			fix.Cmd(),
 			dump.Cmd(),
+			_import.Cmd(),
 		},
 		Before: func(context *cli.Context) error {
 			if context.Bool(cmd.Dryrun) {

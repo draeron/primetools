@@ -5,16 +5,11 @@ import (
 
 	"github.com/pkg/errors"
 
+	"primetools/pkg/enums"
 	"primetools/pkg/music"
 	"primetools/pkg/music/files"
 	"primetools/pkg/music/itunes"
 	"primetools/pkg/music/prime"
-)
-
-const (
-	ITunes = "itunes"
-	Prime  = "prime"
-	Files  = "files"
 )
 
 /*
@@ -33,12 +28,17 @@ func Open(arg string) (music.Library, error) {
 		path = args[1]
 	}
 
-	switch typed {
-	case ITunes:
+	ltype, err := enums.ParseSourceType(typed)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid target type '%s'", typed)
+	}
+
+	switch ltype {
+	case enums.ITunes:
 		return itunes.Open(path)
-	case Prime:
+	case enums.PRIME:
 		return prime.Open(path)
-	case Files:
+	case enums.File:
 		return files.Open(path), nil
 	default:
 		return nil, errors.Errorf("invalid library type: %v", typed)

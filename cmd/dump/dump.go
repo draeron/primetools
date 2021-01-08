@@ -10,12 +10,28 @@ import (
 
 	"primetools/cmd"
 	"primetools/pkg/enums"
+	"primetools/pkg/files"
 	"primetools/pkg/music"
+)
+
+const (
+	FormatFlag = "format"
+	OutputFlag = "output"
 )
 
 var (
 	flags = []cli.Flag{
 		cmd.SourceFlag,
+		&cli.PathFlag{
+			Name: OutputFlag,
+			Aliases: []string{"o"},
+			Value: "-",
+		},
+		&cli.GenericFlag{
+			Name: FormatFlag,
+			Aliases: []string{"f"},
+			Value: enums.Auto.ToCliGeneric(),
+		},
 	}
 )
 
@@ -50,10 +66,7 @@ func newSub(syncType enums.ObjectType) *cli.Command {
 }
 
 func exec(context *cli.Context) error {
-	src, err := cmd.OpenSource(context)
-	if err != nil {
-		return err
-	}
+	src := cmd.OpenSource(context)
 	defer src.Close()
 
 	typ, err := enums.ParseObjectType(strings.ToLower(context.Command.Name))
@@ -61,8 +74,11 @@ func exec(context *cli.Context) error {
 		return err
 	}
 
+	output := context.String(OutputFlag)
+	format, _ := context.Generic(FormatFlag).(*enums.FormatType)
+
 	switch typ {
-	case enums.Playlists,	enums.Crates:
+	case enums.Playlists, enums.Crates:
 		playlists := []music.Tracklist{}
 
 		if typ == enums.Playlists {
@@ -71,13 +87,16 @@ func exec(context *cli.Context) error {
 			playlists = src.Crates()
 		}
 
-		for _, playlist := range playlists {
-			tracks := playlist.Tracks()
-			logrus.Infof("%v (%d items)", playlist.Path(), len(tracks))
-			// for tcount, track := range tracks {
-			// 	logrus.Infof("  - %2d %s (%s)", tcount, track.Name(), track.FilePath())
-			// }
-		}
+		err := files.WriteTo(output, *format, playlists)
+		return errors.Cause(err)
+
+		// for _, playlist := range playlists {
+		// 	tracks := playlist.Tracks()
+		// 	logrus.Infof("%v (%d items)", playlist.Path(), len(tracks))
+		// 	// for tcount, track := range tracks {
+		// 	// 	logrus.Infof("  - %2d %s (%s)", tcount, track.Name(), track.FilePath())
+		// 	// }
+		// }
 	case enums.Tracks:
 		logrus.Info("Tracks in library:")
 		err = src.ForEachTrack(func(index int, total int, track music.Track) error {

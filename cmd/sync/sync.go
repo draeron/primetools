@@ -15,13 +15,6 @@ import (
 )
 
 var (
-	SyncTypes = []enums.SyncType{
-		enums.Ratings,
-		enums.Added,
-		enums.Modified,
-		enums.PlayCount,
-	}
-
 	flags = []cli.Flag{
 		cmd.SourceFlag,
 		cmd.TargetFlag,
@@ -61,16 +54,10 @@ func newSub(syncType enums.SyncType) *cli.Command {
 }
 
 func exec(context *cli.Context) error {
-	src, err := cmd.OpenSource(context)
-	if err != nil {
-		return err
-	}
+	src := cmd.OpenSource(context)
 	defer src.Close()
 
-	tgt, err := cmd.OpenTarget(context)
-	if err != nil {
-		return err
-	}
+	tgt := cmd.OpenTarget(context)
 	defer tgt.Close()
 
 	count := 0
@@ -80,7 +67,7 @@ func exec(context *cli.Context) error {
 
 	start := time.Now()
 
-	err = src.ForEachTrack(func(index int, total int, track music.Track) error {
+	err := src.ForEachTrack(func(index int, total int, track music.Track) error {
 		count++
 
 		// if strings.Contains(track.String(), "Troja Átma") {

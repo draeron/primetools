@@ -109,7 +109,7 @@ func (l *PrimeDB) Close() {
 
 func (l *PrimeDB) buildIdsMap() error {
 	entries := []trackEntry{}
-	err := l.sql.Select(&entries, `SELECT id, path, isExternalTrack, idTrackInExternalDatabase, uuidOfExternalDatabase from Track`)
+	err := l.sql.Unsafe().Select(&entries, `SELECT * from Track`)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch track ids")
 	}
@@ -119,6 +119,9 @@ func (l *PrimeDB) buildIdsMap() error {
 			fpath = files.NormalizePath(l.origin + "/" + fpath)
 		}
 		fpath = files.RemoveAccent(fpath)
+		if _, ok := l.trackIds[fpath]; ok {
+			logrus.Warnf("duplicate entry in sqlite for path '%s'", fpath)
+		}
 		l.trackIds[fpath] = e
 	}
 	return nil

@@ -4,19 +4,11 @@ package enums
 
 /*
 ENUM(
-	Tracks
-	Playlists
-	Crates
-)
- */
-type ObjectType int
-
-/*
-ENUM(
 	Ratings
 	Added
 	Modified
 	PlayCount
 )
- */
+*/
 type SyncType int
+

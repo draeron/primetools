@@ -1,7 +1,9 @@
 package files
 
 import (
+	"encoding/json"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -110,6 +112,22 @@ func (t *Track) Album() string {
 func (t *Track) Year() int {
 	t.readMetadata()
 	return t.year
+}
+
+func (t *Track) Size() int64 {
+	st, err := os.Stat(t.path)
+	if err != nil {
+		logrus.Errorf("could not read stat for file '%s': %v", t.path, err)
+	}
+	return st.Size()
+}
+
+func (t *Track) MarshalYAML() (interface{}, error) {
+	return music.TrackToMarshalObject(t), nil
+}
+
+func (t *Track) MarshalJSON() (interface{}, error) {
+	return json.Marshal(music.TrackToMarshalObject(t))
 }
 
 func (t *Track) readMetadata() {

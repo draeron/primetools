@@ -10,15 +10,3 @@ const (
 )
 
 type Rating int
-
-// func (r Rating) String() string {
-// 	switch r {
-// 	case Zero: return ""
-// 	case OneStar: return "*"
-// 	case TwoStar: return "**"
-// 	case ThreeStar: return "***"
-// 	case FourStar: return "****"
-// 	case FiveStar: return "*****"
-// 	}
-// 	panic("invalid rating value")
-// }

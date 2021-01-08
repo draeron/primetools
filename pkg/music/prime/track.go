@@ -1,6 +1,7 @@
 package prime
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -68,7 +69,7 @@ func (t *Track) SetModified(added time.Time) error {
 }
 
 func (t *Track) PlayCount() int {
-	logrus.Warnf("PlayCount is not implemented in Library library")
+	// logrus.Warnf("PlayCount is not implemented in Library library")
 	return 0
 }
 
@@ -79,7 +80,7 @@ func (t *Track) SetPlayCount(count int) error {
 }
 
 func (t *Track) FilePath() string {
-	return files.NormalizePath(t.entry.Path.String)
+	return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
 }
 
 func (t *Track) Title() string {
@@ -101,7 +102,7 @@ func (t *Track) String() string {
 	if title := t.metaStrings.Get(MetaTitle); title != "" {
 		return title
 	} else {
-		return t.entry.Filename
+		return t.entry.Filename.String
 	}
 }
 
@@ -134,6 +135,18 @@ func writeMetaInt(sql *sqlx.DB, trackId int, meta MetaIntType, value int64) erro
 	logrus.Debugf("Query '%s' row affected: %d", query, count)
 
 	return nil
+}
+
+func (t *Track) Size() int64 {
+	return int64(t.entry.Size.Int32)
+}
+
+func (t *Track) MarshalYAML() (interface{}, error) {
+	return music.TrackToMarshalObject(t), nil
+}
+
+func (t *Track) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TrackToMarshalObject(t))
 }
 
 func (t *Track) readMetaString() {

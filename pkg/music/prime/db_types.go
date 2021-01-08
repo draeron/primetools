@@ -6,12 +6,13 @@ import (
 
 type trackEntry struct {
 	Id           int            `db:"id"`
-	Length       int            `db:"length"`
+	Length       sql.NullInt32  `db:"length"`
 	BPM          sql.NullInt32  `db:"bpm"`
 	Year         sql.NullInt32  `db:"year"`
 	Path         sql.NullString `db:"path"`
-	Filename     string         `db:"filename"`
-	Bitrate      int            `db:"bitrate"`
+	Filename     sql.NullString `db:"filename"`
+	Bitrate      sql.NullInt32  `db:"bitrate"`
+	Size         sql.NullInt32  `db:"fileBytes"`
 	External     sql.NullBool   `db:"isExternalTrack"`
 	ExternalId   sql.NullInt32  `db:"idTrackInExternalDatabase"`
 	ExternalDbId sql.NullString `db:"uuidOfExternalDatabase"`

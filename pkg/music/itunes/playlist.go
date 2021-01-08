@@ -1,6 +1,7 @@
 package itunes
 
 import (
+	"encoding/json"
 	"html"
 
 	"github.com/dhowden/itl"
@@ -38,3 +39,12 @@ func (p Playlist) Tracks() []music.Track {
 	}
 	return out
 }
+
+func (t *Playlist) MarshalYAML() (interface{}, error) {
+	return music.TracklistToMarshal(t), nil
+}
+
+func (t *Playlist) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TracklistToMarshal(t))
+}
+
