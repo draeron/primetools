@@ -9,4 +9,3 @@ ENUM(
 )
 */
 type FixType int
-

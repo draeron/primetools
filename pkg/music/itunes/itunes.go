@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dhowden/itl"
@@ -17,24 +18,28 @@ import (
 )
 
 type Library struct {
-	itllib        *itl.Library
-	tracks        map[string]itl.Track
-	trackPerId    map[int]itl.Track
-	playlistPerId map[string]itl.Playlist
-	writer        *writer
-	info          string
+	itllib          *itl.Library
+	trackByLocation map[string]*Track
+	trackById       map[int]*itl.Track
+	playlistPerId   map[string]*itl.Playlist
+	metaHashes      map[string]*Track
+	writer          itunes_writer
+	info            string
+	mutex           sync.Mutex
 }
 
 func Open(path string) (music.Library, error) {
 	i := &Library{
-		tracks:        map[string]itl.Track{},
-		trackPerId:    map[int]itl.Track{},
-		playlistPerId: map[string]itl.Playlist{},
+		trackByLocation: map[string]*Track{},
+		trackById:       map[int]*itl.Track{},
+		metaHashes:      map[string]*Track{},
+		playlistPerId:   map[string]*itl.Playlist{},
 	}
 
 	if path == "" {
 		path = files.ExpandHomePath("~/Music/iTunes/iTunes Music Library.xml")
 	}
+	path = files.NormalizePath(path)
 
 	logrus.Info("opening iTunes xml...")
 	logrus.Infof("library resolved at '%s'", path)
@@ -56,15 +61,15 @@ func Open(path string) (music.Library, error) {
 		}
 
 		location := normalizePath(t.Location)
-		if _, ok := i.tracks[location]; ok {
+		if _, ok := i.trackByLocation[location]; ok {
 			logrus.Warnf("file '%s' seems to be duplicated in itunes xml", location)
 		}
-		i.tracks[location] = t
-		i.trackPerId[t.TrackID] = t
+		i.trackByLocation[location] = i.newTrack(t)
+		i.trackById[t.TrackID] = &t
 	}
 
 	for _, p := range xml.Playlists {
-		i.playlistPerId[p.PlaylistPersistentID] = p
+		i.playlistPerId[p.PlaylistPersistentID] = &p
 	}
 
 	i.info = fmt.Sprintf("iTunes: App Version: %v, Lib Version: %v.%v, Track Count: %d", xml.ApplicationVersion, xml.MajorVersion, xml.MinorVersion, len(xml.Tracks))
@@ -87,21 +92,62 @@ func (i *Library) AddFile(path string) error {
 	return i.writer.addFile(path)
 }
 
+func (i *Library) MoveTrack(track music.Track, newpath string) error {
+	itrack := track.(*Track)
+	writer := i.getCreateWriter()
+	return writer.setLocation(itrack.itrack.PersistentID, newpath)
+}
+
 func (i *Library) Track(filename string) music.Track {
-	if t, ok := i.tracks[files.NormalizePath(filename)]; ok {
-		return i.newTrack(t)
+	if t, ok := i.trackByLocation[files.NormalizePath(filename)]; ok {
+		return t
 	}
 	return nil
 }
 
+func (i *Library) Matches(track music.Track) (matches music.Tracks) {
+	if track == nil {
+		return
+	}
+
+	// match for the same filename
+	if found := i.Track(track.FilePath()); track != nil {
+		if files.Exists(found.FilePath()) {
+			matches = append(matches, found)
+		}
+	}
+
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
+
+	if len(i.metaHashes) == 0 {
+		start := time.Now()
+		logrus.Infof("constructing track meta cache")
+
+		for _, it := range i.trackByLocation {
+			hash := music.TrackHash(it)
+			i.metaHashes[hash] = it
+		}
+		logrus.Infof("processed metadata for %d tracks in %s", len(i.trackByLocation), time.Since(start))
+	}
+
+	hash := music.TrackHash(track)
+
+	if found, ok := i.metaHashes[hash]; ok {
+		matches = append(matches, found)
+	}
+
+	return matches.Dedupe()
+}
+
 func (i *Library) ForEachTrack(fct music.EachTrackFunc) error {
 	count := 0
-	for _, it := range i.tracks {
-		if !strings.HasPrefix(it.Location, "file://") {
+	for _, it := range i.trackByLocation {
+		if !strings.HasPrefix(it.itrack.Location, "file://") {
 			continue
 		}
 		count++
-		if e := fct(count, len(i.tracks), i.newTrack(it)); e != nil {
+		if e := fct(count, len(i.trackByLocation), it); e != nil {
 			return e
 		}
 	}
@@ -129,7 +175,7 @@ func (i *Library) Playlists() []music.Tracklist {
 	return out
 }
 
-func (i *Library) getCreateWriter() *writer {
+func (i *Library) getCreateWriter() itunes_writer {
 	if i.writer != nil {
 		return i.writer
 	}

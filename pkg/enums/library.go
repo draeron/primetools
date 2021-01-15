@@ -17,18 +17,18 @@ ENUM(
 	Traktor
 )
 */
-type SourceType int
+type LibraryType int
 
-func (s *SourceType) Set(value string) error {
-	val, err := ParseSourceType(value)
+func (s *LibraryType) Set(value string) error {
+	val, err := ParseLibraryType(value)
 	if err != nil {
-		return fmt.Errorf("allowed values are [%v]", strings.Join(SourceTypeNames(), ","))
+		return fmt.Errorf("allowed values are [%v]", strings.Join(LibraryTypeNames(), ","))
 	} else {
 		*s = val
 	}
 	return nil
 }
 
-func (s SourceType) ToCliGeneric() cli.Generic {
+func (s LibraryType) ToCliGeneric() cli.Generic {
 	return &s
 }

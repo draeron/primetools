@@ -16,7 +16,7 @@ type Track struct {
 	lib    *Library
 }
 
-func (i *Library) newTrack(track itl.Track) music.Track {
+func (i *Library) newTrack(track itl.Track) *Track {
 	return &Track{
 		itrack: track,
 	}
@@ -73,8 +73,16 @@ func (t *Track) Album() string {
 	return html.UnescapeString(t.itrack.Album)
 }
 
+func (t *Track) Artist() string {
+	return html.UnescapeString(t.itrack.Artist)
+}
+
 func (t *Track) Size() int64 {
 	return int64(t.itrack.Size)
+}
+
+func (t *Track) Year() int {
+	return t.itrack.Year
 }
 
 func (t *Track) MarshalYAML() (interface{}, error) {
@@ -83,8 +91,4 @@ func (t *Track) MarshalYAML() (interface{}, error) {
 
 func (t *Track) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TrackToMarshalObject(t))
-}
-
-func (t *Track) Year() int {
-	return t.itrack.Year
 }

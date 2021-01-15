@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -21,19 +20,21 @@ type Track struct {
 	path   string
 	title  string
 	album  string
+	artist string
 	year   int
 	mutex  sync.Mutex
 	loaded bool
 }
 
-func newTrack(path string) music.Track {
+func newTrack(path string) *Track {
 	return &Track{
 		path: path,
 	}
 }
 
 func (t *Track) String() string {
-	return filepath.Base(t.path)
+	t.readMetadata()
+	return t.title
 }
 
 func (t *Track) Rating() music.Rating {
@@ -104,6 +105,11 @@ func (t *Track) Title() string {
 	return t.title
 }
 
+func (t *Track) Artist() string {
+	t.readMetadata()
+	return t.artist
+}
+
 func (t *Track) Album() string {
 	t.readMetadata()
 	return t.album
@@ -134,22 +140,37 @@ func (t *Track) readMetadata() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	if !t.loaded {
+	if t.loaded {
 		return
 	}
 	t.loaded = true
 
-	tags, err := id3v2.Open(t.path, id3v2.Options{})
+	tags, err := id3v2.Open(t.path, id3v2.Options{
+		Parse: true,
+		ParseFrames: []string{
+			"Title", "Artist", "Year", "Genre", "POPM", "Album", "TALB",
+		},
+	})
 	if err != nil {
-		logrus.Errorf("could not open id3 tags for file '%s': %v", t.path, err)
+		logrus.Warnf("could not open id3 tags for file '%s': %v", t.path, err)
 		return
 	}
 	defer tags.Close()
 
+	if !tags.HasFrames() {
+		logrus.Warnf("file '%s' doesn't have any id3 meta data", t.path)
+		return
+	}
+
 	t.title = tags.Title()
 	t.album = tags.Album()
-	t.year, err = strconv.Atoi(tags.Year())
-	if err != nil {
-		logrus.Errorf("could not parse year tags in file '%s': %v", t.path, err)
+	t.artist = tags.Artist()
+
+	yearstr := tags.Year()
+	if yearstr != "" && len(yearstr) >= 4 {
+		t.year, err = strconv.Atoi(yearstr[:4])
+		if err != nil {
+			logrus.Errorf("could not parse year tags in file '%s': %v", t.path, err)
+		}
 	}
 }

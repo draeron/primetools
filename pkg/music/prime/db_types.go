@@ -61,6 +61,10 @@ func (m metaStringEntries) Album() string {
 	return m.Get(MetaAlbum)
 }
 
+func (m metaStringEntries) Artist() string {
+	return m.Get(MetaArtist)
+}
+
 func (m metaStringEntries) Get(typed MetaStringType) string {
 	for _, it := range m {
 		if it.Type == typed {

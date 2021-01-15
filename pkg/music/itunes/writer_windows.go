@@ -11,29 +11,29 @@ import (
 	"primetools/pkg/files"
 )
 
-type writer struct {
+type writer_windows struct {
 	app    *itunes.ITunes
 	tracks map[string]*itunes.Track
 	mutex  sync.Mutex
 }
 
-func createWriter() (*writer, error) {
+func createWriter() (itunes_writer, error) {
 	logrus.Infof("connecting to iTunes through COM interface")
 
 	com, err := itunes.Init()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to init to iTunes application interface: %v", err)
 	}
-	return &writer{
+	return &writer_windows{
 		app: com,
 	}, nil
 }
 
-func (w *writer) Close() {
+func (w *writer_windows) Close() {
 	w.app.Exit()
 }
 
-func (w *writer) load() {
+func (w *writer_windows) load() {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
@@ -86,7 +86,7 @@ func (w *writer) load() {
 	logrus.Infof("iTunes COM data loaded in %s", time.Since(start))
 }
 
-func (w *writer) addFile(path string) error {
+func (w *writer_windows) addFile(path string) error {
 	if !files.Exists(path) {
 		return errors.Errorf("file '%s' doesn't exists", path)
 	}
@@ -99,7 +99,7 @@ func (w *writer) addFile(path string) error {
 	return lib.AddFile(path)
 }
 
-func (w *writer) track(pid string) (*itunes.Track, error) {
+func (w *writer_windows) track(pid string) (*itunes.Track, error) {
 	lib, err := w.app.GetMainPlaylist()
 	if err != nil {
 		return nil, errors.Wrapf(err, "itunes.GetMainPlaylist()")
@@ -122,7 +122,15 @@ func (w *writer) track(pid string) (*itunes.Track, error) {
 	return track, nil
 }
 
-func (w *writer) setRating(pid string, rating int) error {
+func (w *writer_windows) setLocation(pid string, path string) error {
+	track, err := w.track(pid)
+	if err != nil {
+		return err
+	}
+	return track.SetLocation(path)
+}
+
+func (w *writer_windows) setRating(pid string, rating int) error {
 	track, err := w.track(pid)
 	if err != nil {
 		return err
@@ -130,7 +138,7 @@ func (w *writer) setRating(pid string, rating int) error {
 	return track.SetRating(rating)
 }
 
-func (w *writer) setPlayCount(pid string, count int) error {
+func (w *writer_windows) setPlayCount(pid string, count int) error {
 	track, err := w.track(pid)
 	if err != nil {
 		return err

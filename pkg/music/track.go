@@ -3,6 +3,7 @@ package music
 import (
 	"crypto/sha1"
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 type Track interface {
 	Title() string
 	Album() string
+	Artist() string
 	Year() int
 
 	Rating() Rating
@@ -35,20 +37,22 @@ type Track interface {
 }
 
 type trackJson struct {
-	Title     string    `json:"title"`
-	FilePath  string    `json:"file_path"`
-	Album     string    `json:"album,omitempty"`
-	Year      int       `json:"year,omitempty"`
-	Modified  time.Time `json:"modified,omitempty"`
-	Added     time.Time `json:"added,omitempty"`
-	Rating    Rating    `json:"rating,omitempty"`
-	PlayCount int       `json:"play_count,omitempty"`
+	Title     string
+	FilePath  string
+	Artist    string    `json:",omitempty" yaml:",omitempty"`
+	Album     string    `json:",omitempty" yaml:",omitempty"`
+	Year      int       `json:",omitempty" yaml:",omitempty"`
+	Modified  time.Time `json:",omitempty" yaml:",omitempty"`
+	Added     time.Time `json:",omitempty" yaml:",omitempty"`
+	Rating    Rating    `json:",omitempty" yaml:",omitempty"`
+	PlayCount int       `json:",omitempty" yaml:",omitempty"`
 }
 
 func TrackToMarshalObject(track Track) trackJson {
 	return trackJson{
 		Title:     track.Title(),
 		Album:     track.Album(),
+		Artist:    track.Artist(),
 		Year:      track.Year(),
 		FilePath:  track.FilePath(),
 		Added:     track.Added(),
@@ -58,11 +62,24 @@ func TrackToMarshalObject(track Track) trackJson {
 	}
 }
 
+func TrackMeta(track Track) string {
+	msg := ""
+	msg += fmt.Sprintf("Impl: %v\n", reflect.TypeOf(track).Elem().Name())
+	msg += fmt.Sprintf("Title: %v\n", track.Title())
+	msg += fmt.Sprintf("Album: %v\n", track.Album())
+	msg += fmt.Sprintf("Artist: %v\n", track.Artist())
+	msg += fmt.Sprintf("Year: %v\n", strconv.Itoa(track.Year()))
+	msg += fmt.Sprintf("File: %v\n", track.FilePath())
+	msg += fmt.Sprintf("Hash: %v\n", TrackHash(track))
+	return msg
+}
+
 func TrackHash(track Track) string {
 	hash := sha1.New()
 
 	hash.Write([]byte(track.Title()))
 	hash.Write([]byte(track.Album()))
+	hash.Write([]byte(track.Artist()))
 	hash.Write([]byte(strconv.Itoa(track.Year())))
 
 	res := hash.Sum(nil)

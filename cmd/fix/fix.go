@@ -1,21 +1,41 @@
 package fix
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
 	"primetools/pkg/enums"
+	"primetools/pkg/files"
 	"primetools/pkg/music"
+	"primetools/pkg/music/factory"
 )
 
 var (
 	flags = []cli.Flag{
 		cmd.SourceFlag,
+		&cli.BoolFlag{
+			Name:        "yes",
+			Aliases:     []string{"y"},
+			DefaultText: "Do not prompt for write confirmation",
+			Destination: &opts.accept,
+		},
+		&cli.PathFlag{
+			Name:        "search-path",
+			Aliases:     []string{"p"},
+			Destination: &opts.searchPath,
+		},
 	}
+
+	opts = struct {
+		accept     bool
+		searchPath string
+	}{}
 )
 
 func Cmd() *cli.Command {
@@ -28,22 +48,7 @@ func Cmd() *cli.Command {
 		Action: func(context *cli.Context) error {
 			return errors.Errorf("unknown fix type: %s", context.Args().First())
 		},
-		Subcommands: []*cli.Command{
-			newSub(enums.Duplicate),
-			newSub(enums.Missing),
-		},
-		// Before: before,
-	}
-}
-
-func newSub(typ enums.FixType) *cli.Command {
-	return &cli.Command{
-		Name:      strings.ToLower(typ.String()),
-		UsageText: "",
-		Action:    exec,
-		Flags:     flags,
-		// Hidden: true,
-		HideHelpCommand: true,
+		Subcommands: cmd.SubCmds(enums.FixTypeNames(), exec, flags),
 	}
 }
 
@@ -56,9 +61,10 @@ func exec(context *cli.Context) error {
 		return err
 	}
 
+	logrus.Infof("scanning for %s files...", typ)
+
 	switch typ {
 	case enums.Duplicate:
-		logrus.Info("scanning for duplicate file in database")
 
 		tracks := map[string]music.Track{}
 		duplicates := map[string][]music.Track{}
@@ -84,7 +90,47 @@ func exec(context *cli.Context) error {
 			logrus.Info("no duplicate file were found")
 		}
 	case enums.Missing:
+		file, err := factory.Open(enums.File, opts.searchPath)
+		if err != nil {
+			return err
+		}
+
+		err = src.ForEachTrack(func(index int, total int, track music.Track) error {
+			if !files.Exists(track.FilePath()) {
+				logrus.Warnf("file '%s' is missing from disk", track.FilePath())
+
+				matches := file.Matches(track)
+
+				if len(matches) > 0 {
+					logrus.Infof("found %d matching tracks", len(matches))
+
+					var match music.Track
+
+					if !opts.accept {
+						sprompt := promptui.Select{
+							Label: fmt.Sprintf("Please select path to use as replacement for '%s'", track.FilePath()),
+							Items: matches.Filepaths(),
+						}
+						idx, _, err := sprompt.Run()
+						if err != nil {
+							return err
+						}
+						match = matches[idx]
+						logrus.Infof("moving '%s' to '%s'", track.FilePath(), matches[idx])
+					}
+
+					if match == nil {
+						return errors.New("invalid match selection")
+					}
+
+					return src.MoveTrack(track, match.FilePath())
+				} else {
+					logrus.Errorf("could not find a match for '%v'", track)
+				}
+			}
+			return nil
+		})
 	}
 
-	return nil
+	return err
 }

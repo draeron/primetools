@@ -106,6 +106,17 @@ func (l *Library) AddFile(path string) error {
 	return errors.New(msg)
 }
 
+func (l *Library) MoveTrack(track music.Track, newpath string) error {
+	itrack, ok := track.(*Track)
+	if !ok {
+		panic("invalid track type parameter")
+	}
+
+	itrack.FilePath()
+
+	return nil
+}
+
 func (l *Library) Track(filename string) music.Track {
 	if track := l.main.Track(filename); track != nil {
 		return track
@@ -117,6 +128,10 @@ func (l *Library) Track(filename string) music.Track {
 		}
 	}
 	return nil
+}
+
+func (l *Library) Matches(track music.Track) music.Tracks {
+	panic("implement me")
 }
 
 func (l *Library) ForEachTrack(fct music.EachTrackFunc) error {

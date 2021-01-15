@@ -2,7 +2,6 @@ package sync
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,7 +16,9 @@ import (
 var (
 	flags = []cli.Flag{
 		cmd.SourceFlag,
+		cmd.SourcePathFlag,
 		cmd.TargetFlag,
+		cmd.TargetPathFlag,
 		cmd.DryrunFlag,
 	}
 )
@@ -31,25 +32,8 @@ func Cmd() *cli.Command {
 		Usage:       cmd.Usage,
 		HideHelp:    true,
 		Description: "sync assets from a source to a destination",
-		Subcommands: []*cli.Command{
-			newSub(enums.Ratings),
-			newSub(enums.Added),
-			newSub(enums.Modified),
-			newSub(enums.PlayCount),
-		},
-		Flags: flags,
-		// Before: before,
-	}
-}
-
-func newSub(syncType enums.SyncType) *cli.Command {
-	return &cli.Command{
-		Name:      strings.ToLower(syncType.String()),
-		UsageText: "",
-		Action:    exec,
-		Flags:     flags,
-		// Hidden: true,
-		HideHelpCommand: true,
+		Subcommands: cmd.SubCmds(enums.SyncTypeNames(), exec, flags),
+		Flags:       flags,
 	}
 }
 

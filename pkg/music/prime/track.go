@@ -2,6 +2,7 @@ package prime
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -74,13 +75,23 @@ func (t *Track) PlayCount() int {
 }
 
 func (t *Track) SetPlayCount(count int) error {
-	msg := "PlayCount is not implemented in Library library"
+	msg := "PlayCount is not implemented in PRIME library"
 	logrus.Warnf(msg)
 	return errors.New(msg)
 }
 
 func (t *Track) FilePath() string {
 	return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
+}
+
+func (t *Track) SetPath(newp string) {
+	fname := filepath.Base(newp)
+	_, err := t.src.sql.Exec(`UPDATE Track SET path = ?, filename = ? WHERE id = ?`, newp, fname, t.entry.Id)
+	if err != nil {
+		logrus.Errorf("failed to location of track '%s' in PRIME db: %v", t, err)
+	} else {
+		logrus.Info("path for '%s' updated in PRIME db", t)
+	}
 }
 
 func (t *Track) Title() string {
@@ -95,6 +106,11 @@ func (t *Track) Album() string {
 
 func (t *Track) Year() int {
 	return int(t.entry.Year.Int32)
+}
+
+func (t *Track) Artist() string {
+	t.readMetaString()
+	return t.metaStrings.Artist()
 }
 
 func (t *Track) String() string {

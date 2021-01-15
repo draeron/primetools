@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/ghodss/yaml"
+	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/runes"
@@ -37,6 +37,36 @@ func Exists(path string) bool {
 	// }
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+func IsMusicFile(path string) bool {
+	return filepath.Ext(path) == ".mp3" || filepath.Ext(path) == ".flac"
+}
+
+func Size(path string) int64 {
+	stat, err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+	return stat.Size()
+}
+
+func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) {
+	// root = filepath.ToSlash(root) + "/"
+
+	godirwalk.Walk(root, &godirwalk.Options{
+		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
+			logrus.Warnf("cannot walk '%s': %v", s, err)
+			return godirwalk.SkipNode
+		},
+		Callback: func(osPathname string, directoryEntry *godirwalk.Dirent) error {
+			if IsMusicFile(osPathname) {
+				return walkFunc(osPathname, directoryEntry)
+			}
+			return nil
+		},
+		AllowNonDirectory: true,
+	})
 }
 
 func IsDir(path string) bool {
@@ -78,7 +108,7 @@ func WriteTo(opath string, format enums.FormatType, data interface{}) error {
 	switch {
 	case ext == ".yaml", ext == ".yml", format == enums.Yaml:
 		yamlv2.FutureLineWrap()
-		content, err = yaml.Marshal(data)
+		content, err = yamlv2.Marshal(data)
 	case ext == ".json", format == enums.Json:
 		content, err = json.MarshalIndent(data, "", "  ")
 	default:
@@ -97,6 +127,7 @@ func WriteTo(opath string, format enums.FormatType, data interface{}) error {
 		if err != nil {
 			return errors.Wrapf(err, "fail to open file '%s", opath)
 		}
+		logrus.Infof("opened file '%s' for writing", opath)
 	} else {
 		return errors.Errorf("cannot save to file, opath is empty")
 	}

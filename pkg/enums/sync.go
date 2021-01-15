@@ -11,4 +11,3 @@ ENUM(
 )
 */
 type SyncType int
-

@@ -35,7 +35,7 @@ func (p Playlist) Name() string {
 func (p Playlist) Tracks() []music.Track {
 	out := []music.Track{}
 	for _, t := range p.plist.PlaylistItems {
-		out = append(out, p.lib.newTrack(p.lib.trackPerId[t.TrackID]))
+		out = append(out, p.lib.newTrack(*p.lib.trackById[t.TrackID]))
 	}
 	return out
 }
@@ -47,4 +47,3 @@ func (t *Playlist) MarshalYAML() (interface{}, error) {
 func (t *Playlist) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TracklistToMarshal(t))
 }
-

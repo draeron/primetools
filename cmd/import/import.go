@@ -4,12 +4,15 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
+	"primetools/pkg/enums"
 )
 
 var (
 	flags = []cli.Flag{
 		cmd.SourceFlag,
+		cmd.SourcePathFlag,
 		cmd.TargetFlag,
+		cmd.TargetPathFlag,
 		&cli.StringSliceFlag{
 			Name: "playlist",
 		},
@@ -25,6 +28,7 @@ func Cmd() *cli.Command {
 		Usage:       cmd.Usage,
 		HideHelp:    true,
 		Description: "import a playlist",
+		Subcommands: cmd.SubCmds(enums.SyncTypeNames(), exec, flags),
 		Flags:       flags,
 		Action:      exec,
 	}
