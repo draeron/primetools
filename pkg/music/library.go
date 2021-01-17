@@ -23,4 +23,3 @@ type Library interface {
 }
 
 type EachTrackFunc func(index int, total int, track Track) error
-

@@ -84,14 +84,15 @@ func (t *Track) FilePath() string {
 	return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
 }
 
-func (t *Track) SetPath(newp string) {
-	fname := filepath.Base(newp)
-	_, err := t.src.sql.Exec(`UPDATE Track SET path = ?, filename = ? WHERE id = ?`, newp, fname, t.entry.Id)
+func (t *Track) SetPath(newpath string) error {
+	rpath, err := filepath.Rel(t.src.origin, newpath)
 	if err != nil {
-		logrus.Errorf("failed to location of track '%s' in PRIME db: %v", t, err)
-	} else {
-		logrus.Info("path for '%s' updated in PRIME db", t)
+		rpath = newpath
 	}
+
+	return t.runQuery(func(sql *sqlx.DB, trackId int) error {
+		return writeFilepath(sql, trackId, rpath)
+	})
 }
 
 func (t *Track) Title() string {
@@ -122,18 +123,53 @@ func (t *Track) String() string {
 	}
 }
 
-func (t *Track) writeMetaIntCascade(meta MetaIntType, value int64) error {
-	if err := writeMetaInt(t.src.sql, t.entry.Id, meta, value); err != nil {
+func (t *Track) Size() int64 {
+	return int64(t.entry.Size.Int32)
+}
+
+func (t *Track) MarshalYAML() (interface{}, error) {
+	return music.TrackToMarshalObject(t), nil
+}
+
+func (t *Track) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TrackToMarshalObject(t))
+}
+
+func (t *Track) runQuery(fct func(sql *sqlx.DB, trackId int) error) error {
+	err := fct(t.src.sql, t.entry.Id)
+	if err != nil {
 		return err
 	}
-	if t.entry.External.Bool && t.entry.ExternalDbId.Valid && t.entry.ExternalId.Valid {
+	if t.isExternal() {
 		if db, ok := t.src.lib.dbs[t.entry.ExternalDbId.String]; ok {
-			return writeMetaInt(db.sql, int(t.entry.ExternalId.Int32), meta, value)
+			return fct(db.sql, int(t.entry.ExternalId.Int32))
 		} else {
 			// todo: log cannot find DB
 		}
 	}
 	return nil
+}
+
+func (t *Track) isExternal() bool {
+	return t.entry.External.Bool && t.entry.ExternalDbId.Valid && t.entry.ExternalId.Valid
+}
+
+func writeFilepath(sql *sqlx.DB, trackId int, newpath string) error {
+	query := `UPDATE Track SET path = ?, filename = ? WHERE id = ?`
+	fname := filepath.Base(newpath)
+
+	_, err := sql.Exec(query, newpath, fname, trackId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to location of track '%v' in PRIME db: %v", trackId, err)
+	}
+	logrus.Infof("path for '%v' updated in PRIME db", trackId)
+	return nil
+}
+
+func (t *Track) writeMetaIntCascade(meta MetaIntType, value int64) error {
+	return t.runQuery(func(sql *sqlx.DB, trackId int) error {
+		return writeMetaInt(t.src.sql, t.entry.Id, meta, value)
+	})
 }
 
 func writeMetaInt(sql *sqlx.DB, trackId int, meta MetaIntType, value int64) error {
@@ -151,18 +187,6 @@ func writeMetaInt(sql *sqlx.DB, trackId int, meta MetaIntType, value int64) erro
 	logrus.Debugf("Query '%s' row affected: %d", query, count)
 
 	return nil
-}
-
-func (t *Track) Size() int64 {
-	return int64(t.entry.Size.Int32)
-}
-
-func (t *Track) MarshalYAML() (interface{}, error) {
-	return music.TrackToMarshalObject(t), nil
-}
-
-func (t *Track) MarshalJSON() ([]byte, error) {
-	return json.Marshal(music.TrackToMarshalObject(t))
 }
 
 func (t *Track) readMetaString() {

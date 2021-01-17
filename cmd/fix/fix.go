@@ -65,7 +65,6 @@ func exec(context *cli.Context) error {
 
 	switch typ {
 	case enums.Duplicate:
-
 		tracks := map[string]music.Track{}
 		duplicates := map[string][]music.Track{}
 
@@ -117,6 +116,8 @@ func exec(context *cli.Context) error {
 						}
 						match = matches[idx]
 						logrus.Infof("moving '%s' to '%s'", track.FilePath(), matches[idx])
+					} else {
+						match = matches[0]
 					}
 
 					if match == nil {

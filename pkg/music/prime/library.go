@@ -3,6 +3,7 @@ package prime
 import (
 	fpath "path"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
@@ -14,8 +15,9 @@ import (
 )
 
 type Library struct {
-	main *PrimeDB
-	dbs  map[string]*PrimeDB
+	main      *PrimeDB
+	dbs       map[string]*PrimeDB
+	hashCache map[string]music.Tracks
 }
 
 func Open(path string) (music.Library, error) {
@@ -112,9 +114,7 @@ func (l *Library) MoveTrack(track music.Track, newpath string) error {
 		panic("invalid track type parameter")
 	}
 
-	itrack.FilePath()
-
-	return nil
+	return itrack.SetPath(newpath)
 }
 
 func (l *Library) Track(filename string) music.Track {
@@ -131,7 +131,30 @@ func (l *Library) Track(filename string) music.Track {
 }
 
 func (l *Library) Matches(track music.Track) music.Tracks {
-	panic("implement me")
+	if l.hashCache == nil {
+		start := time.Now()
+		logrus.Info("constructing track hashes from PRIME library metadata")
+
+		l.hashCache = map[string]music.Tracks{}
+		err := l.ForEachTrack(func(index int, total int, track music.Track) error {
+			h := music.TrackHash(track)
+			if _, ok := l.hashCache[h]; ok {
+				logrus.Warnf("duplicate metadata entries: ")
+			}
+			if t, ok := track.(*Track); ok {
+				l.hashCache[h] = append(l.hashCache[h], t)
+			}
+			return nil
+		})
+		if err != nil {
+			logrus.Error("%v", err)
+		}
+		logrus.Infof("processed %d tracks in %v", len(l.hashCache), time.Since(start))
+	}
+
+	h := music.TrackHash(track)
+
+	return l.hashCache[h]
 }
 
 func (l *Library) ForEachTrack(fct music.EachTrackFunc) error {

@@ -11,8 +11,10 @@ import (
 	"unicode"
 
 	"github.com/karrick/godirwalk"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
@@ -109,6 +111,10 @@ func WriteTo(opath string, format enums.FormatType, data interface{}) error {
 	case ext == ".yaml", ext == ".yml", format == enums.Yaml:
 		yamlv2.FutureLineWrap()
 		content, err = yamlv2.Marshal(data)
+	case ext == ".bson":
+		content, err = bson.Marshal(data)
+	case ext == ".toml":
+		content, err = toml.Marshal(data)
 	case ext == ".json", format == enums.Json:
 		content, err = json.MarshalIndent(data, "", "  ")
 	default:
