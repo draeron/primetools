@@ -17,7 +17,7 @@ func createWriter() (itunes_writer, error) {
 	return &writer_notimplemented{}, nil
 }
 
-func (w writer_notimplemented) Close() {
+func (w writer_notimplemented) close() {
 }
 
 func (w writer_notimplemented) load() {

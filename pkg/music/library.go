@@ -15,6 +15,9 @@ type Library interface {
 	Playlists() []Tracklist
 	Crates() []Tracklist
 
+	CreatePlaylist(path string) (Tracklist, error)
+	CreateCrate(path string) (Tracklist, error)
+
 	MoveTrack(track Track, newpath string) error
 
 	ForEachTrack(fct EachTrackFunc) error

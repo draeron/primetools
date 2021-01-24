@@ -1,15 +1,16 @@
 package itunes
 
 import (
-	"github.com/draeron/itunes-win/itunes"
+	"github.com/dhowden/itl"
 )
 
 type itunes_writer interface {
-	Close()
+	close()
 	load()
 	addFile(path string) error
-	track(pid string) (*itunes.Track, error)
 	setRating(pid string, rating int) error
 	setPlayCount(pid string, count int) error
 	setLocation(pid string, path string) error
+	createPlaylist(name string) (*itl.Playlist, error)
+	// setPlaylistContent(pid string, tracks []itunes.Track) error
 }

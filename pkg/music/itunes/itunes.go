@@ -83,13 +83,30 @@ func Open(path string) (music.Library, error) {
 
 func (i *Library) Close() {
 	if i.writer != nil {
-		i.writer.Close()
+		i.writer.close()
 	}
 	logrus.Info("iTunes library closed")
 }
 
 func (i *Library) AddFile(path string) error {
 	return i.writer.addFile(path)
+}
+
+func (i *Library) CreatePlaylist(path string) (music.Tracklist, error) {
+	writer := i.getCreateWriter()
+	playlist, err := writer.createPlaylist(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Playlist{
+		lib:   i,
+		plist: *playlist,
+	}, nil
+}
+
+func (i *Library) CreateCrate(path string) (music.Tracklist, error) {
+	return nil, errors.New("crates don't exists in ITunes, use playlists")
 }
 
 func (i *Library) MoveTrack(track music.Track, newpath string) error {
@@ -111,8 +128,8 @@ func (i *Library) Matches(track music.Track) (matches music.Tracks) {
 	}
 
 	// match for the same filename
-	if found := i.Track(track.FilePath()); track != nil {
-		if files.Exists(found.FilePath()) {
+	if found := i.Track(track.FilePath()); found != nil {
+		if found.Size() == track.Size() && files.Exists(found.FilePath()) {
 			matches = append(matches, found)
 		}
 	}
@@ -155,15 +172,15 @@ func (i *Library) ForEachTrack(fct music.EachTrackFunc) error {
 }
 
 func (i *Library) Crates() []music.Tracklist {
-	// in itunes, a crate is also a playlist
-	return i.Playlists()
+	logrus.Warnf("crates don't exists in ITunes, only playlists")
+	return nil
 }
 
 func (i *Library) Playlists() []music.Tracklist {
 	out := []music.Tracklist{}
 	for _, playlist := range i.itllib.Playlists {
 		// only include music playlists
-		if playlist.DistinguishedKind != 0 || playlist.Name == "Library" || playlist.Folder {
+		if !playlist.Master || playlist.DistinguishedKind != 0 || playlist.Name == "Library" || playlist.Folder {
 			continue
 		}
 

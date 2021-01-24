@@ -14,8 +14,11 @@ ENUM(
 	ITunes
 	PRIME
 	File
-	Traktor
 )
+
+todo: add Eventually these
+	Traktor
+  Serato
 */
 type LibraryType int
 

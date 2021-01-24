@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -74,7 +75,45 @@ func (l *PrimeDB) IsExported() bool {
 	return count != 0
 }
 
-func (l *PrimeDB) fetchList(listType ListType) []music.Tracklist {
+func (l *PrimeDB) createList(path string, folder bool, listType ListType) *TrackList {
+	split := strings.Split(path, "/")
+	name := split[len(split)-1]
+	ppath := strings.Replace(path, "/", ";", -1) + ";"
+
+	logrus.Infof("creating %v '%s in PRIME database", listType, path)
+
+	query := `INSERT INTO List (type, title, path, isFolder, isExplicitlyExported, id) VALUES (?, ?, ?, ?, 1, (SELECT max(id) + 1 FROM List))`
+	_, err := l.sql.Exec(query, listType, name, ppath, folder)
+	if err != nil {
+		logrus.Errorf("failed to create %s '%s': %v", listType.String(), path, err)
+		return nil
+	}
+
+	list, err := l.fetchList(path, listType)
+	if err != nil {
+		logrus.Errorf("failed to create %s '%s': %v", listType.String(), path, err)
+	}
+	return list
+}
+
+func (l *PrimeDB) fetchList(path string, listType ListType) (*TrackList, error) {
+	ppath := strings.Replace(path, "/", ";", -1) + ";"
+	entry := listEntry{}
+	err := l.sql.Get(&entry, `SELECT * FROM List WHERE path = ? AND type = ?`, ppath, listType)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, errors.Wrapf(err, "fail to fetch %v '%s'", listType.String(), path)
+		} else {
+			return nil, nil
+		}
+	}
+	return &TrackList{
+		src:   l,
+		entry: entry,
+	}, nil
+}
+
+func (l *PrimeDB) fetchLists(listType ListType) []music.Tracklist {
 	list, err := l.fetchListEntries(listType)
 	if err != nil {
 		logrus.Errorf("failed to fetch crates from PRIME database: %v", err)

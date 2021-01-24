@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bogem/id3v2"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/djherbis/times.v1"
@@ -132,8 +133,12 @@ func (t *Track) MarshalYAML() (interface{}, error) {
 	return music.TrackToMarshalObject(t), nil
 }
 
-func (t *Track) MarshalJSON() (interface{}, error) {
+func (t *Track) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TrackToMarshalObject(t))
+}
+
+func (t *Track) MarshalTOML() ([]byte, error) {
+	return toml.Marshal(music.TrackToMarshalObject(t))
 }
 
 func (t *Track) readMetadata() {

@@ -40,15 +40,47 @@ func (t TrackList) String() string {
 	return "[" + strings.Join(names, ",") + "]"
 }
 
-func (t *TrackList) MarshalYAML() (interface{}, error) {
-	return music.TracklistToMarshal(t), nil
+func (t *TrackList) setParent(parent *TrackList) {
+	logrus.Infof("updating parent for %s '%s", t.entry.Type, t.Path())
+	var err error
+
+	// delete previous entries
+	_, err = t.src.sql.Exec(`DELETE FROM ListParentList WHERE listOriginId = ?`, t.entry.Id)
+	if err != nil {
+		logrus.Errorf("failed to update %v '%s'", t.entry.Type, t.Path())
+		return
+	}
+	_, err = t.src.sql.Exec(`DELETE FROM ListHierarchy WHERE listIdChild = ?`, t.entry.Id)
+	if err != nil {
+		logrus.Errorf("failed to update %v '%s'", t.entry.Type, t.Path())
+		return
+	}
+
+	if parent == nil {
+		parent = t
+	}
+
+	_, err = t.src.sql.Exec(`INSERT INTO ListParentList (listOriginId, listOriginType, listParentId, listParentType) VALUES (?,?,?,?)`,
+		t.entry.Id, t.entry.Type, parent.entry.Id, parent.entry.Type)
+	if err != nil {
+		logrus.Errorf("failed to update %v '%s'", t.entry.Type, t.Path())
+		return
+	}
+
+	if t.entry.Id != parent.entry.Id {
+		_, err = t.src.sql.Exec(`INSERT INTO ListHierarchy (listId, listType, listIdChild, listTypeChild) VALUES (?,?,?,?)`,
+			parent.entry.Id, parent.entry.Type, t.entry.Id, t.entry.Type)
+		if err != nil {
+			logrus.Errorf("failed to update %v '%s'", t.entry.Type, t.Path())
+		}
+	}
 }
 
-func (t *TrackList) MarshalJSON() ([]byte, error) {
-	return json.Marshal(music.TracklistToMarshal(t))
+func (t *TrackList) SetTracks(tracks music.Tracks) {
+	panic("implement me")
 }
 
-func (t *TrackList) Tracks() []music.Track {
+func (t *TrackList) Tracks() music.Tracks {
 	tracks := []trackEntry{}
 	query := `select * from ListTrackList join Track ON Track.id = ListTrackList.trackId WHERE listId = ? ORDER BY trackNumber`
 
@@ -63,4 +95,12 @@ func (t *TrackList) Tracks() []music.Track {
 		out = append(out, newTrack(t.src, it))
 	}
 	return out
+}
+
+func (t *TrackList) MarshalYAML() (interface{}, error) {
+	return music.TracklistToMarshal(t), nil
+}
+
+func (t *TrackList) MarshalJSON() ([]byte, error) {
+	return json.Marshal(music.TracklistToMarshal(t))
 }

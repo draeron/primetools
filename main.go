@@ -12,6 +12,7 @@ import (
 	"primetools/cmd/fix"
 	_import "primetools/cmd/import"
 	"primetools/cmd/sync"
+	"primetools/cmd/test"
 	"primetools/pkg/options"
 )
 
@@ -32,6 +33,7 @@ func main() {
 			fix.Cmd(),
 			dump.Cmd(),
 			_import.Cmd(),
+			test.Cmd(),
 		},
 		Before: func(context *cli.Context) error {
 			if context.Bool(cmd.Dryrun) {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dhowden/itl"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 
 	"primetools/pkg/music"
@@ -91,4 +92,8 @@ func (t *Track) MarshalYAML() (interface{}, error) {
 
 func (t *Track) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TrackToMarshalObject(t))
+}
+
+func (t *Track) MarshalTOML() ([]byte, error) {
+	return toml.Marshal(music.TrackToMarshalObject(t))
 }

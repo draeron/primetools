@@ -7,7 +7,9 @@ import (
 type Tracklist interface {
 	Name() string
 	Path() string
-	Tracks() []Track
+	Tracks() Tracks
+
+	SetTracks(Tracks)
 }
 
 type Tracks []Track

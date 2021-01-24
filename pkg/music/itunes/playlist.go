@@ -32,12 +32,16 @@ func (p Playlist) Name() string {
 	return html.UnescapeString(p.plist.Name)
 }
 
-func (p Playlist) Tracks() []music.Track {
+func (p Playlist) Tracks() music.Tracks {
 	out := []music.Track{}
 	for _, t := range p.plist.PlaylistItems {
 		out = append(out, p.lib.newTrack(*p.lib.trackById[t.TrackID]))
 	}
 	return out
+}
+
+func (p Playlist) SetTracks(tracks music.Tracks) {
+	panic("writing playlist content not supported on ITunes library")
 }
 
 func (t *Playlist) MarshalYAML() (interface{}, error) {

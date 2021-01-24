@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/karrick/godirwalk"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"primetools/pkg/files"
@@ -46,6 +47,14 @@ func (f *FileLibrary) Playlists() []music.Tracklist {
 func (f *FileLibrary) AddFile(path string) error {
 	logrus.Warn("cannot add files to files, nothing to do")
 	return nil
+}
+
+func (f *FileLibrary) CreatePlaylist(path string) (music.Tracklist, error) {
+	return nil, errors.New("cannot create playlist on file library")
+}
+
+func (f *FileLibrary) CreateCrate(path string) (music.Tracklist, error) {
+	return nil, errors.New("cannot create creates on file library")
 }
 
 func (l *FileLibrary) MoveTrack(track music.Track, newpath string) error {

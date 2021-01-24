@@ -44,7 +44,13 @@ func (t *CombinedTrackList) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TracklistToMarshal(t))
 }
 
-func (c *CombinedTrackList) Tracks() []music.Track {
+func (c *CombinedTrackList) SetTracks(tracks music.Tracks) {
+	for _, p := range c.lists {
+		p.SetTracks(tracks)
+	}
+}
+
+func (c *CombinedTrackList) Tracks() music.Tracks {
 	tracks := []music.Track{}
 	for _, pl := range c.lists {
 		tracks = append(tracks, pl.Tracks()...)

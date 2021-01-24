@@ -71,9 +71,9 @@ func (l *Library) Close() {
 }
 
 func (l *Library) Playlists() []music.Tracklist {
-	list := l.main.fetchList(ListPlayList)
+	list := l.main.fetchLists(ListPlayList)
 	for _, db := range l.dbs {
-		list = append(list, db.fetchList(ListPlayList)...)
+		list = append(list, db.fetchLists(ListPlayList)...)
 	}
 	return list
 }
@@ -81,12 +81,12 @@ func (l *Library) Playlists() []music.Tracklist {
 func (l *Library) Crates() []music.Tracklist {
 	mape := map[string]*CombinedTrackList{}
 
-	for _, p := range l.main.fetchList(ListCrate) {
+	for _, p := range l.main.fetchLists(ListCrate) {
 		mape[p.Path()] = newCombinedTracklist(p)
 	}
 
 	for _, db := range l.dbs {
-		for _, p := range db.fetchList(ListCrate) {
+		for _, p := range db.fetchLists(ListCrate) {
 			if _, ok := mape[p.Path()]; ok {
 				mape[p.Path()].MergeWith(p)
 			} else {
@@ -100,6 +100,52 @@ func (l *Library) Crates() []music.Tracklist {
 		list = append(list, it)
 	}
 	return list
+}
+
+/*
+	Playlist are only created in the main DB
+*/
+func (l *Library) CreatePlaylist(path string) (music.Tracklist, error) {
+
+	split := strings.Split(path, "/")
+
+	var err error
+	var playlist *TrackList
+	var previous *TrackList
+
+	isLast := func (idx int) bool {
+		return idx == len(split) - 1
+	}
+
+	for idx, _ := range split {
+		pathname := strings.Join(split[:idx+1], "/")
+
+		playlist, err = l.main.fetchList(pathname, ListPlayList)
+		if err != nil {
+			return nil, err
+		}
+
+		if playlist == nil {
+			playlist = l.main.createList(pathname, !isLast(idx), ListPlayList)
+			if playlist == nil {
+				return nil, errors.Errorf("failed to create playlist %s", pathname)
+			}
+		} else if !isLast(idx) && !playlist.entry.Folder {
+			return nil, errors.Errorf("cannot crate folder playlist '%s' since there exists another non folder playlist")
+		}
+
+		playlist.setParent(previous)
+		previous = playlist
+	}
+
+	return playlist, nil
+}
+
+/*
+	Crates are create independently in all libraries
+*/
+func (l *Library) CreateCrate(path string) (music.Tracklist, error) {
+	panic("implement me")
 }
 
 func (l *Library) AddFile(path string) error {

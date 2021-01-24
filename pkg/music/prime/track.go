@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -133,6 +134,10 @@ func (t *Track) MarshalYAML() (interface{}, error) {
 
 func (t *Track) MarshalJSON() ([]byte, error) {
 	return json.Marshal(music.TrackToMarshalObject(t))
+}
+
+func (t *Track) MarshalTOML() ([]byte, error) {
+	return toml.Marshal(music.TrackToMarshalObject(t))
 }
 
 func (t *Track) runQuery(fct func(sql *sqlx.DB, trackId int) error) error {

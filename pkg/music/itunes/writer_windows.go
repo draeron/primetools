@@ -1,9 +1,11 @@
 package itunes
 
 import (
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/dhowden/itl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -29,7 +31,7 @@ func createWriter() (itunes_writer, error) {
 	}, nil
 }
 
-func (w *writer_windows) Close() {
+func (w *writer_windows) close() {
 	w.app.Exit()
 }
 
@@ -58,20 +60,16 @@ func (w *writer_windows) load() {
 	}
 
 	w.tracks = map[string]*itunes.Track{}
-	count, err := tracks.GetCount()
+	count, err := tracks.Count()
 	// note: index start at 1
 	for i := 1; i < int(count); i++ {
-		track, err := tracks.GetTrackByIndex(i)
+		track, err := tracks.ByIndex(i)
 		if err != nil {
 			logrus.Errorf("tracks.GetTrackByIndex(%d): %v", i, err)
 			continue
 		}
 
-		kind, err := track.GetKind()
-		if err != nil {
-			logrus.Errorf("track.GetKind: %v", err)
-		}
-		if kind != "File track" {
+		if track.Kind() != itunes.ITTrackKindFile {
 			continue
 		}
 
@@ -99,7 +97,7 @@ func (w *writer_windows) addFile(path string) error {
 	return lib.AddFile(path)
 }
 
-func (w *writer_windows) track(pid string) (*itunes.Track, error) {
+func (w *writer_windows) track(pid itunes.PersistentID) (*itunes.Track, error) {
 	lib, err := w.app.GetMainPlaylist()
 	if err != nil {
 		return nil, errors.Wrapf(err, "itunes.GetMainPlaylist()")
@@ -110,7 +108,7 @@ func (w *writer_windows) track(pid string) (*itunes.Track, error) {
 		return nil, errors.Wrapf(err, "playlist.GetMainPlaylist()")
 	}
 
-	track, err := tracks.GetTrackByPersistentID(pid)
+	track, err := tracks.ByPersistentID(pid)
 	if err != nil {
 		return nil, errors.Wrapf(err, "playlist.GetTrackByPersistentID(%s)", pid)
 	}
@@ -123,7 +121,12 @@ func (w *writer_windows) track(pid string) (*itunes.Track, error) {
 }
 
 func (w *writer_windows) setLocation(pid string, path string) error {
-	track, err := w.track(pid)
+	ppid, err := itunes.ParsePersistentID(pid)
+	if err != nil {
+		return errors.Wrapf(err, "string '%s' is not a valid persistent id", pid)
+	}
+
+	track, err := w.track(ppid)
 	if err != nil {
 		return err
 	}
@@ -131,7 +134,12 @@ func (w *writer_windows) setLocation(pid string, path string) error {
 }
 
 func (w *writer_windows) setRating(pid string, rating int) error {
-	track, err := w.track(pid)
+	ppid, err := itunes.ParsePersistentID(pid)
+	if err != nil {
+		return errors.Wrapf(err, "string '%s' is not a valid persistent id", pid)
+	}
+
+	track, err := w.track(ppid)
 	if err != nil {
 		return err
 	}
@@ -139,9 +147,105 @@ func (w *writer_windows) setRating(pid string, rating int) error {
 }
 
 func (w *writer_windows) setPlayCount(pid string, count int) error {
-	track, err := w.track(pid)
+	ppid, err := itunes.ParsePersistentID(pid)
+	if err != nil {
+		return errors.Wrapf(err, "string '%s' is not a valid persistent id", pid)
+	}
+
+	track, err := w.track(ppid)
 	if err != nil {
 		return err
 	}
 	return track.SetPlayedCount(count)
 }
+
+func (w *writer_windows) createPlaylist(path string) (*itl.Playlist, error) {
+	return nil, errors.New("disabled for now, not tested enough")
+	split := strings.Split(path, "/")
+
+	collection, err := w.app.Playlists()
+	if err != nil {
+		return nil, errors.Wrapf(err, "fail to get main playlist")
+	}
+
+	isLast := func(idx int) bool {
+		return idx != len(split)-1
+	}
+
+	var previousPlaylist *itunes.Playlist
+
+	for idx, name := range split {
+		playlist, err := collection.ByName(name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get playlist with name '%s'", name)
+		}
+
+		pathName := strings.Join(split[:idx], ".")
+
+		// if it doesn't exists, create it
+		if playlist == nil {
+			// if !last, create a folder
+			if !isLast(idx) {
+				logrus.Infof("creating folder '%s' in itune...", pathName)
+				playlist, err = w.app.CreateFolder(name)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to create folder '%s'", pathName)
+				}
+			} else {
+				logrus.Infof("creating playlist '%s' in itune...", pathName)
+				playlist, err = w.app.CreatePlaylist(name)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to create folder '%s'", pathName)
+				}
+			}
+
+			if playlist == nil {
+				return nil, errors.New("cannot set parent to nil")
+			}
+
+			if previousPlaylist != nil {
+				err = playlist.SetParent(previousPlaylist)
+				if err != nil {
+					return nil, errors.Wrapf(err, "fail to set parent for '%s'", pathName)
+				}
+			}
+		}
+		previousPlaylist = playlist
+	}
+
+	pid, err := w.app.ObjectPersistentID(previousPlaylist)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch persistent id for playlist")
+	}
+
+	parent, err := previousPlaylist.Parent()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get parent for playlist")
+	}
+
+	ppid, err := w.app.ObjectPersistentID(parent)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch persistent id for playlist")
+	}
+
+	return &itl.Playlist{
+		Name:                 previousPlaylist.Name(),
+		PlaylistPersistentID: pid.String(),
+		ParentPersistentID:   ppid.String(),
+		DistinguishedKind:    int(itunes.ITUserPlaylistSpecialKindMusic),
+		Visible:              true,
+		Music:                true,
+	}, nil
+}
+
+// func (w *writer_windows) setPlaylistContent(pid string, tracks []itunes.Track) error {
+// 	playlist, err := w.app.Playlist(pid)
+// 	if err != nil || playlist == nil {
+// 		return err
+// 	}
+//
+// 	if smart, _ := playlist.IsSmart(); smart {
+// 		return errors.New("cannot set content of smart playlist")
+// 	}
+//
+// }

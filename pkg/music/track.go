@@ -2,11 +2,13 @@ package music
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 
+	"github.com/pelletier/go-toml"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,18 +36,20 @@ type Track interface {
 
 	fmt.Stringer
 	yaml.Marshaler
+	toml.Marshaler
+	json.Marshaler
 }
 
 type trackJson struct {
 	Title     string
 	FilePath  string
-	Artist    string    `json:",omitempty" yaml:",omitempty"`
-	Album     string    `json:",omitempty" yaml:",omitempty"`
-	Year      int       `json:",omitempty" yaml:",omitempty"`
-	Modified  time.Time `json:",omitempty" yaml:",omitempty"`
-	Added     time.Time `json:",omitempty" yaml:",omitempty"`
-	Rating    Rating    `json:",omitempty" yaml:",omitempty"`
-	PlayCount int       `json:",omitempty" yaml:",omitempty"`
+	Artist    string    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	Album     string    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	Year      int       `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	Modified  time.Time `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	Added     time.Time `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	Rating    Rating    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
+	PlayCount int       `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
 }
 
 func TrackToMarshalObject(track Track) trackJson {

@@ -20,14 +20,14 @@ type trackEntry struct {
 }
 
 type listEntry struct {
-	Id         int            `db:"id"`
-	Type       ListType       `db:"type"`
-	Title      string         `db:"title"`
-	Path       sql.NullString `db:"path"`
-	TrackCount int            `db:"trackCount"`
-}
-
-type listItemEntry struct {
+	Id               int            `db:"id"`
+	Type             ListType       `db:"type"`
+	Title            string         `db:"title"`
+	Path             sql.NullString `db:"path"`
+	TrackCount       int            `db:"trackCount"`
+	ExplicitExported bool           `db:"isExplicitlyExported"`
+	Folder           bool           `db:"isFolder"`
+	Ordering         int            `db:"ordering"`
 }
 
 type infoEntry struct {

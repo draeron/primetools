@@ -27,4 +27,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
-//replace github.com/draeron/itunes-win => ../itunes-win
+replace github.com/draeron/itunes-win => ../itunes-win
