@@ -32,7 +32,7 @@ func Cmd() *cli.Command {
 		Usage:       cmd.Usage,
 		HideHelp:    true,
 		Description: "sync assets from a source to a destination",
-		Subcommands: cmd.SubCmds(enums.SyncTypeNames(), exec, flags),
+		Subcommands: cmd.SubCmds(enums.SyncTypeNames(), exec, flags, nil),
 		Flags:       flags,
 	}
 }

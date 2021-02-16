@@ -9,27 +9,10 @@ type Tracklist interface {
 	Path() string
 	Tracks() Tracks
 
-	SetTracks(Tracks)
+	SetTracks(Tracks) error
 }
 
 type Tracks []Track
-
-func TracklistToMarshal(list Tracklist) interface{} {
-	tracks := []trackJson{}
-	for _, track := range list.Tracks() {
-		val := TrackToMarshalObject(track)
-		tracks = append(tracks, val)
-	}
-	return struct {
-		Name   string `json:"name"`
-		Path   string `json:"path,omitempty"`
-		Tracks []trackJson
-	}{
-		Name:   list.Name(),
-		Path:   list.Path(),
-		Tracks: tracks,
-	}
-}
 
 /*
 	Return a sorted de-deduplicated (based on path)
@@ -57,6 +40,15 @@ func (t Tracks) Titles() (titles []string) {
 		titles = append(titles, it.Title())
 	}
 	return titles
+}
+
+func (t Tracks) HasFile(path string) bool {
+	for _, it := range t {
+		if it.FilePath() == path {
+			return true
+		}
+	}
+	return false
 }
 
 func (t Tracks) Filepaths() (paths []string) {

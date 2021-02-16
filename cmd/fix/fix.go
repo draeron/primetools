@@ -48,7 +48,7 @@ func Cmd() *cli.Command {
 		Action: func(context *cli.Context) error {
 			return errors.Errorf("unknown fix type: %s", context.Args().First())
 		},
-		Subcommands: cmd.SubCmds(enums.FixTypeNames(), exec, flags),
+		Subcommands: cmd.SubCmds(enums.FixTypeNames(), exec, flags, nil),
 	}
 }
 

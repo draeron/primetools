@@ -82,7 +82,11 @@ func (t *Track) SetPlayCount(count int) error {
 }
 
 func (t *Track) FilePath() string {
-	return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
+	if filepath.IsAbs(t.entry.Path.String) {
+		return t.entry.Path.String
+	} else {
+		return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
+	}
 }
 
 func (t *Track) SetPath(newpath string) error {
@@ -129,15 +133,15 @@ func (t *Track) Size() int64 {
 }
 
 func (t *Track) MarshalYAML() (interface{}, error) {
-	return music.TrackToMarshalObject(t), nil
+	return music.NewMarchalTrack(t), nil
 }
 
 func (t *Track) MarshalJSON() ([]byte, error) {
-	return json.Marshal(music.TrackToMarshalObject(t))
+	return json.Marshal(music.NewMarchalTrack(t))
 }
 
 func (t *Track) MarshalTOML() ([]byte, error) {
-	return toml.Marshal(music.TrackToMarshalObject(t))
+	return toml.Marshal(music.NewMarchalTrack(t))
 }
 
 func (t *Track) runQuery(fct func(sql *sqlx.DB, trackId int) error) error {

@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/gobwas/glob"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -52,6 +53,11 @@ var (
 	}
 )
 
+type RuleSlice struct {
+	rules       []glob.Glob
+	StringSlice cli.StringSlice
+}
+
 func CheckSourceAndTarget(context *cli.Context) error {
 	if context.String(Source) == "" {
 		return errors.New("--source cannot be empty")
@@ -63,15 +69,19 @@ func CheckSourceAndTarget(context *cli.Context) error {
 	return nil
 }
 
-func SubCmds(namenames []string, action cli.ActionFunc, flags []cli.Flag) (subs []*cli.Command) {
+func SubCmds(namenames []string, action cli.ActionFunc, flags []cli.Flag, extra func(cmd *cli.Command)) (subs []*cli.Command) {
 	for _, name := range namenames {
-		subs = append(subs, &cli.Command{
+		cmd := &cli.Command{
 			Name:            strings.ToLower(name),
 			UsageText:       "",
 			Action:          action,
 			Flags:           flags,
 			HideHelpCommand: true,
-		})
+		}
+		if extra != nil {
+			extra(cmd)
+		}
+		subs = append(subs, cmd)
 	}
 	return
 }
@@ -102,4 +112,28 @@ func OpenTarget(context *cli.Context) music.Library {
 
 func OpenSource(context *cli.Context) music.Library {
 	return open(context, Source, SourcePath)
+}
+
+func (r *RuleSlice) Compile() error {
+	// verify rules
+	for _, it := range r.StringSlice.Value() {
+		rx, err := glob.Compile(it)
+		if err != nil {
+			return errors.Errorf("Invalid matching rule '%': %v", it, err)
+		}
+		r.rules = append(r.rules, rx)
+	}
+	return nil
+}
+
+func (r RuleSlice) Match(name string) bool {
+	if len(r.rules) == 0 {
+		return true
+	}
+	for _, rule := range r.rules {
+		if rule.Match(name) {
+			return true
+		}
+	}
+	return false
 }

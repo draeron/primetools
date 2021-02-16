@@ -130,15 +130,15 @@ func (t *Track) Size() int64 {
 }
 
 func (t *Track) MarshalYAML() (interface{}, error) {
-	return music.TrackToMarshalObject(t), nil
+	return music.NewMarchalTrack(t), nil
 }
 
 func (t *Track) MarshalJSON() ([]byte, error) {
-	return json.Marshal(music.TrackToMarshalObject(t))
+	return json.Marshal(music.NewMarchalTrack(t))
 }
 
 func (t *Track) MarshalTOML() ([]byte, error) {
-	return toml.Marshal(music.TrackToMarshalObject(t))
+	return toml.Marshal(music.NewMarchalTrack(t))
 }
 
 func (t *Track) readMetadata() {

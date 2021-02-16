@@ -33,7 +33,17 @@ var (
 			Aliases: []string{"f"},
 			Value:   enums.Auto.ToCliGeneric(),
 		},
+		&cli.StringSliceFlag{
+			Name:        "name",
+			Aliases:     []string{"n"},
+			DefaultText: "Names of crate/playlist to dump, can be glob (ie: *something*), if empty, will dump all objects.",
+			Destination: &opts.rules.StringSlice,
+		},
 	}
+
+	opts = struct {
+		rules cmd.RuleSlice
+	}{}
 )
 
 func Cmd() *cli.Command {
@@ -46,7 +56,7 @@ func Cmd() *cli.Command {
 		Action: func(context *cli.Context) error {
 			return errors.Errorf("unknown sync type: %s", context.Args().First())
 		},
-		Subcommands: cmd.SubCmds(enums.ObjectTypeNames(), exec, flags),
+		Subcommands: cmd.SubCmds(enums.ObjectTypeNames(), exec, flags, nil),
 	}
 }
 
@@ -56,6 +66,10 @@ func exec(context *cli.Context) error {
 
 	typ, err := enums.ParseObjectType(strings.ToLower(context.Command.Name))
 	if err != nil {
+		return err
+	}
+
+	if err = opts.rules.Compile(); err != nil {
 		return err
 	}
 
@@ -72,12 +86,19 @@ func exec(context *cli.Context) error {
 			playlists = src.Crates()
 		}
 
+		playlists = filterLists(playlists)
+
 		sort.Slice(playlists, func(i, j int) bool {
 			return playlists[i].Path() < playlists[j].Path()
 		})
 
+		for _, it := range playlists {
+			logrus.Infof("dumping %s '%s'", typ, it.Path())
+		}
+
 		err := files.WriteTo(output, *format, playlists)
 		return errors.Cause(err)
+
 	case enums.Tracks:
 		logrus.Info("Tracks in library:")
 		tracks := []music.Track{}
@@ -92,4 +113,14 @@ func exec(context *cli.Context) error {
 		return errors.Cause(err)
 	}
 	return err
+}
+
+func filterLists(lists []music.Tracklist) []music.Tracklist {
+	out := []music.Tracklist{}
+	for _, it := range lists {
+		if opts.rules.Match(it.Path()) {
+			out = append(out, it)
+		}
+	}
+	return out
 }

@@ -3,6 +3,7 @@ package files
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -95,6 +96,38 @@ func NormalizePath(path string) string {
 		path = strings.ToLower(path)
 	}
 	return path
+}
+
+func ReadFrom(path string, data interface{}) error {
+
+	fd, err := os.Open(path)
+	if err != nil {
+		return errors.Wrapf(err, "fail to open path '%s'", path)
+	}
+
+	content, err := ioutil.ReadAll(fd)
+	if err != nil {
+		return errors.Wrapf(err, "fail to read '%s'", path)
+	}
+
+	switch filepath.Ext(path) {
+	case ".yml", ".yaml":
+		err = yamlv2.Unmarshal(content, data)
+	case ".json":
+		err = json.Unmarshal(content, data)
+	case ".toml":
+		err = toml.Unmarshal(content, data)
+	case ".bson":
+		err = bson.Unmarshal(content, data)
+	default:
+		return errors.Errorf("unsupported file format %s", filepath.Ext(path))
+	}
+
+	if err != nil {
+		return errors.Wrapf(err, "fail to parse '%s' content", path)
+	}
+
+	return nil
 }
 
 func WriteTo(opath string, format enums.FormatType, data interface{}) error {

@@ -7,7 +7,8 @@ require (
 	github.com/deepakjois/gousbdrivedetector v0.0.0-20161027045320-4d29e4d6f1b7
 	github.com/dhowden/itl v0.0.0-20170329215456-9fbe21093131
 	github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a // indirect
-	github.com/draeron/itunes-win v0.2.0
+	github.com/draeron/itunes-win v0.2.2
+	github.com/gobwas/glob v0.2.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/karrick/godirwalk v1.16.1
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
@@ -27,4 +28,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
-replace github.com/draeron/itunes-win => ../itunes-win
+//replace github.com/draeron/itunes-win => ../itunes-win

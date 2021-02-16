@@ -4,11 +4,13 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/pelletier/go-toml"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,32 +42,6 @@ type Track interface {
 	json.Marshaler
 }
 
-type trackJson struct {
-	Title     string
-	FilePath  string
-	Artist    string    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	Album     string    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	Year      int       `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	Modified  time.Time `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	Added     time.Time `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	Rating    Rating    `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-	PlayCount int       `json:",omitempty" yaml:",omitempty" toml:",omitempty"`
-}
-
-func TrackToMarshalObject(track Track) trackJson {
-	return trackJson{
-		Title:     track.Title(),
-		Album:     track.Album(),
-		Artist:    track.Artist(),
-		Year:      track.Year(),
-		FilePath:  track.FilePath(),
-		Added:     track.Added(),
-		Modified:  track.Modified(),
-		Rating:    track.Rating(),
-		PlayCount: track.PlayCount(),
-	}
-}
-
 func TrackMeta(track Track) string {
 	msg := ""
 	msg += fmt.Sprintf("Impl: %v\n", reflect.TypeOf(track).Elem().Name())
@@ -76,6 +52,28 @@ func TrackMeta(track Track) string {
 	msg += fmt.Sprintf("File: %v\n", track.FilePath())
 	msg += fmt.Sprintf("Hash: %v\n", TrackHash(track))
 	return msg
+}
+
+/*
+	Resolve file path and tell if both track point to the same file
+*/
+func IsSameFile(left Track, right Track) bool {
+	var err error
+
+	toabs := func(path string) string {
+		if !filepath.IsAbs(path) {
+			path, err = filepath.Abs(path)
+			if err != nil {
+				logrus.Errorf("cannot determine absolute path for '%s': %v", path, err)
+				return ""
+			}
+		}
+		return path
+	}
+
+	lpath := toabs(left.FilePath())
+	rpath := toabs(right.FilePath())
+	return lpath == rpath
 }
 
 func TrackHash(track Track) string {

@@ -5,6 +5,7 @@ import (
 	"html"
 
 	"github.com/dhowden/itl"
+	"github.com/pkg/errors"
 
 	"primetools/pkg/music"
 )
@@ -40,14 +41,14 @@ func (p Playlist) Tracks() music.Tracks {
 	return out
 }
 
-func (p Playlist) SetTracks(tracks music.Tracks) {
-	panic("writing playlist content not supported on ITunes library")
+func (p Playlist) SetTracks(tracks music.Tracks) error {
+	return errors.New("writing playlist content not supported on ITunes library")
 }
 
 func (t *Playlist) MarshalYAML() (interface{}, error) {
-	return music.TracklistToMarshal(t), nil
+	return music.NewMarshallTracklist(t), nil
 }
 
 func (t *Playlist) MarshalJSON() ([]byte, error) {
-	return json.Marshal(music.TracklistToMarshal(t))
+	return json.Marshal(music.NewMarshallTracklist(t))
 }

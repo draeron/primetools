@@ -189,7 +189,7 @@ func (l *PrimeDB) Track(filename string) music.Track {
 	}
 }
 
-func (l *PrimeDB) Tracks() ([]music.Track, error) {
+func (l *PrimeDB) Tracks() ([]*Track, error) {
 	entries := []*trackEntry{}
 	query := `SELECT * FROM Track`
 	err := l.sql.Unsafe().Select(&entries, query)
@@ -197,7 +197,7 @@ func (l *PrimeDB) Tracks() ([]music.Track, error) {
 		return nil, errors.Wrapf(err, "query '%s' failed", query)
 	}
 
-	tracks := []music.Track{}
+	tracks := []*Track{}
 
 	for _, e := range entries {
 		tracks = append(tracks, newTrack(l, *e))
