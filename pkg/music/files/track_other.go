@@ -2,6 +2,12 @@
 
 package files
 
+import (
+	"time"
+
+	"github.com/pkg/errors"
+)
+
 func (t Track) SetAdded(added time.Time) error {
-	panic("not implemented")
+	return errors.New("not implemented")
 }
