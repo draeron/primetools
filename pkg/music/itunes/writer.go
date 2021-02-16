@@ -7,7 +7,7 @@ import (
 type itunes_writer interface {
 	close()
 	load()
-	addFile(path string) error
+	addFile(path string) (*itl.Track, error)
 	setRating(pid string, rating int) error
 	setPlayCount(pid string, count int) error
 	setLocation(pid string, path string) error

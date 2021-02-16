@@ -19,15 +19,18 @@ import (
 var (
 	flags = []cli.Flag{
 		cmd.SourceFlag,
+		cmd.SourcePathFlag,
+		cmd.DryrunFlag,
 		&cli.BoolFlag{
 			Name:        "yes",
 			Aliases:     []string{"y"},
-			DefaultText: "Do not prompt for write confirmation",
+			Usage:       "Do not prompt for write confirmation",
 			Destination: &opts.accept,
 		},
 		&cli.PathFlag{
 			Name:        "search-path",
 			Aliases:     []string{"p"},
+			Usage:       "path to search for music file",
 			Destination: &opts.searchPath,
 		},
 	}
@@ -43,12 +46,19 @@ func Cmd() *cli.Command {
 		Name:        "fix",
 		Usage:       cmd.Usage,
 		HideHelp:    true,
-		Description: "try to fix problem database",
+		Description: fmt.Sprintf("try to fix problem database [%s]", strings.Join(enums.FixTypeNames(), ", ")),
 		Flags:       flags,
 		Action: func(context *cli.Context) error {
 			return errors.Errorf("unknown fix type: %s", context.Args().First())
 		},
-		Subcommands: cmd.SubCmds(enums.FixTypeNames(), exec, flags, nil),
+		Subcommands: cmd.SubCmds(enums.FixTypeNames(), exec, flags, func(cmd *cli.Command) {
+			cmd.Before = func(context *cli.Context) error {
+				if !files.Exists(opts.searchPath) {
+					return errors.Errorf("search path '%s' doesn't exists", opts.searchPath)
+				}
+				return nil
+			}
+		}),
 	}
 }
 
@@ -104,6 +114,11 @@ func exec(context *cli.Context) error {
 					logrus.Infof("found %d matching tracks", len(matches))
 
 					var match music.Track
+
+					if cmd.IsDryRun(context) {
+						logrus.Infof("[DRY] would be changed to '%s'", matches[0])
+						return nil
+					}
 
 					if !opts.accept {
 						sprompt := promptui.Select{

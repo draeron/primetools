@@ -34,6 +34,10 @@ func Open(path string) *FileLibrary {
 func (f *FileLibrary) Close() {
 }
 
+func (f *FileLibrary) SupportedExtensions() music.FileExtensions {
+	return music.FileExtensions{} // no import supported
+}
+
 func (f *FileLibrary) Crates() []music.Tracklist {
 	logrus.Warn("there cannot be any crates in files")
 	return nil
@@ -44,9 +48,9 @@ func (f *FileLibrary) Playlists() []music.Tracklist {
 	return nil
 }
 
-func (f *FileLibrary) AddFile(path string) error {
+func (f *FileLibrary) AddFile(path string) (music.Track, error) {
 	logrus.Warn("cannot add files to files, nothing to do")
-	return nil
+	return nil, nil
 }
 
 func (f *FileLibrary) CreatePlaylist(path string) (music.Tracklist, error) {

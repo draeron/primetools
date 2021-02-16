@@ -36,7 +36,7 @@ var (
 		&cli.StringSliceFlag{
 			Name:        "name",
 			Aliases:     []string{"n"},
-			DefaultText: "Names of crate/playlist to dump, can be glob (ie: *something*), if empty, will dump all objects.",
+			Usage:       "Names of crate/playlist to dump, can be glob (ie: *something*), if empty, will dump all objects.",
 			Destination: &opts.rules.StringSlice,
 		},
 	}

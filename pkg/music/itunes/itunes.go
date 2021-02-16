@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -88,8 +89,36 @@ func (i *Library) Close() {
 	logrus.Info("iTunes library closed")
 }
 
-func (i *Library) AddFile(path string) error {
-	return i.writer.addFile(path)
+func (i *Library) SupportedExtensions() music.FileExtensions {
+	return music.FileExtensions{
+		".aac",
+		".aiff",
+		".mp3",
+		".wav",
+		".m4a",
+	}
+}
+
+func (i *Library) AddFile(path string) (music.Track, error) {
+	if filepath.Ext(path) == ".flac" {
+		logrus.Warnf("flac file not supported in itunes, ignoring file '%s'", path)
+		return nil, nil
+	}
+
+	writer := i.getCreateWriter()
+
+	track, err := writer.addFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, nil
+	}
+
+	return &Track{
+		itrack: *track,
+		lib: i,
+	}, nil
 }
 
 func (i *Library) CreatePlaylist(path string) (music.Tracklist, error) {

@@ -1,6 +1,7 @@
 package _import
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -17,16 +18,17 @@ var (
 	flags = []cli.Flag{
 		cmd.TargetFlag,
 		cmd.TargetPathFlag,
+		cmd.DryrunFlag,
 		&cli.PathFlag{
 			Name:        "source",
 			Aliases:     []string{"s"},
 			Destination: &opts.source,
-			DefaultText: "dump file to use as source",
+			Usage:       "file to use as source",
 		},
 		&cli.StringSliceFlag{
 			Name:        "name",
 			Aliases:     []string{"n"},
-			DefaultText: "Names of crate/playlist to import, can be glob (*something*), if none is given, will import all object in dump file.",
+			Usage:       "Names of crate/playlist to import, can be glob (*something*), if none is given, will import all object in dump file.",
 			Destination: &opts.rules.StringSlice,
 		},
 		// &cli.BoolFlag{
@@ -38,7 +40,7 @@ var (
 		&cli.BoolFlag{
 			Name:        "ignore-not-found",
 			Aliases:     []string{},
-			DefaultText: "Ignore track which aren't found in target, otherwise the operation will fail.",
+			Usage:       "Ignore track which aren't found in target, otherwise the operation will fail.",
 			Destination: &opts.ignoreNotFound,
 		},
 	}
@@ -96,7 +98,7 @@ func exec(context *cli.Context) error {
 	}
 
 	for _, list := range lists {
-		err = importList(list, target)
+		err = importList(context, list, target)
 		if err != nil {
 			return err
 		}
@@ -105,7 +107,7 @@ func exec(context *cli.Context) error {
 	return nil
 }
 
-func importList(list music.MarshallTracklist, target music.Library) error {
+func importList(context *cli.Context, list music.MarshallTracklist, target music.Library) error {
 	var err error
 
 	if !opts.rules.Match(list.Path) {
@@ -146,11 +148,16 @@ func importList(list music.MarshallTracklist, target music.Library) error {
 		}
 	}
 
-	err = targetList.SetTracks(newList)
-	if err != nil {
-		return err
+	msg := fmt.Sprintf("%s '%s' was updated from %d to %d items", opts.objType, targetList.Path(), oldCount, len(newList))
+	if !cmd.IsDryRun(context) {
+		err = targetList.SetTracks(newList)
+		if err != nil {
+			return err
+		}
+	} else {
+		msg = "[DRY] " + msg
 	}
 
-	logrus.Infof("%s '%s' was updated from %d to %d items", opts.objType, targetList.Path(), oldCount, len(newList))
+	logrus.Infof(msg)
 	return nil
 }

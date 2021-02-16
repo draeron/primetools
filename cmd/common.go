@@ -50,6 +50,7 @@ var (
 	DryrunFlag = &cli.BoolFlag{
 		Name:    Dryrun,
 		Aliases: []string{"ro"},
+		Usage:   "read only mode",
 	}
 )
 
@@ -67,6 +68,10 @@ func CheckSourceAndTarget(context *cli.Context) error {
 		return errors.New("--target cannot be empty")
 	}
 	return nil
+}
+
+func IsDryRun(context *cli.Context) bool {
+	return context.Bool(DryrunFlag.Name)
 }
 
 func SubCmds(namenames []string, action cli.ActionFunc, flags []cli.Flag, extra func(cmd *cli.Command)) (subs []*cli.Command) {

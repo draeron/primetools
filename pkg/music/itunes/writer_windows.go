@@ -84,17 +84,80 @@ func (w *writer_windows) load() {
 	logrus.Infof("iTunes COM data loaded in %s", time.Since(start))
 }
 
-func (w *writer_windows) addFile(path string) error {
+func (w *writer_windows) addFile(path string) (*itl.Track, error) {
 	if !files.Exists(path) {
-		return errors.Errorf("file '%s' doesn't exists", path)
+		return nil, errors.Errorf("file '%s' doesn't exists", path)
 	}
 
 	lib, err := w.app.GetMainPlaylist()
 	if err != nil {
-		return errors.Wrapf(err, "itunes.GetMainPlaylist()")
+		return nil, errors.Wrapf(err, "itunes.GetMainPlaylist()")
 	}
 
-	return lib.AddFile(path)
+	op, err := lib.AddFile(path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Playlist.AddFile()")
+	}
+
+	collection, err := op.GetTracks()
+	if err != nil {
+		return nil, errors.Wrapf(err, "OperationStatus.GetTracks()")
+	}
+
+	count, err := collection.Count()
+	if err != nil {
+		return nil, errors.Wrapf(err, "TrackCollection.Count()")
+	}
+
+	// assume the track will be added at the last index
+	for idx := 1; idx <= int(count); idx++ {
+		track, err := collection.ByIndex(idx)
+		if err != nil {
+			return nil, errors.Wrapf(err, "TrackCollection.ByIndex")
+		}
+		if track == nil || track.IsNil() {
+			return nil, errors.Wrapf(err, "null ptr return by TrackCollection")
+		}
+
+		loc, err := track.GetLocation()
+		if track.Kind() != itunes.ITTrackKindFile || loc == "" {
+			continue
+		}
+
+		if normalizePath(loc) == files.NormalizePath(path) {
+			name, _ := track.GetName()
+			rating, _ := track.GetRating()
+			year, _ := track.GetYear()
+			play, _ := track.GetPlayedCount()
+			size, _ := track.GetSize()
+			album, _ := track.GetAlbum()
+			artits, _ := track.GetArtist()
+			added, _ := track.GetDateAdded()
+			bpm, _ := track.GetBPM()
+			aartist, _ := track.GetAlbumArtist()
+			genre, _ := track.GetGenre()
+			pid, _ := w.app.ObjectPersistentID(track)
+
+			out := &itl.Track{
+				Name:         name,
+				Year:         int(year),
+				Album:        album,
+				Artist:       artits,
+				AlbumArtist:  aartist,
+				Genre:        genre,
+				Location:     loc,
+				PersistentID: pid.String(),
+				Rating:       int(rating),
+				PlayCount:    int(play),
+				Size:         int(size),
+				DateAdded:    added,
+				BPM:          int(bpm),
+			}
+
+			return out, nil
+		}
+	}
+	return nil, nil
 }
 
 func (w *writer_windows) track(pid itunes.PersistentID) (*itunes.Track, error) {
@@ -161,6 +224,7 @@ func (w *writer_windows) setPlayCount(pid string, count int) error {
 
 func (w *writer_windows) createPlaylist(path string) (*itl.Playlist, error) {
 	return nil, errors.New("disabled for now, not tested enough")
+
 	split := strings.Split(path, "/")
 
 	collection, err := w.app.Playlists()

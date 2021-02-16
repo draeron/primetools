@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ func Cmd() *cli.Command {
 		},
 		Usage:       cmd.Usage,
 		HideHelp:    true,
-		Description: "sync assets from a source to a destination",
+		Description: fmt.Sprintf("sync assets from a source to a destination [%s]", strings.Join(enums.SyncTypeNames(), ", ")),
 		Subcommands: cmd.SubCmds(enums.SyncTypeNames(), exec, flags, nil),
 		Flags:       flags,
 	}
@@ -74,7 +75,7 @@ func exec(context *cli.Context) error {
 			if tt.Modified() != track.Modified() {
 				changed++
 				msg := fmt.Sprintf("updating modified for '%s': %v => %v", track, tt.Modified().Format(time.RFC822), track.Modified().Format(time.RFC822))
-				if !context.Bool(cmd.Dryrun) {
+				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
 					err := tt.SetModified(track.Modified())
 					if err != nil {
@@ -89,7 +90,7 @@ func exec(context *cli.Context) error {
 			if tt.Added() != track.Added() {
 				changed++
 				msg := fmt.Sprintf("updating added for '%s': %v => %v", track, tt.Added().Format(time.RFC822), track.Added().Format(time.RFC822))
-				if !context.Bool(cmd.Dryrun) {
+				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
 					err := tt.SetAdded(track.Added())
 					if err != nil {
@@ -104,7 +105,7 @@ func exec(context *cli.Context) error {
 			if tt.PlayCount() != track.PlayCount() {
 				changed++
 				msg := fmt.Sprintf("updating play count for '%s': %v => %v", track, tt.PlayCount(), track.PlayCount())
-				if !context.Bool(cmd.Dryrun) {
+				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
 					err := tt.SetPlayCount(track.PlayCount())
 					if err != nil {
@@ -119,7 +120,7 @@ func exec(context *cli.Context) error {
 			if tt.Rating() != track.Rating() {
 				changed++
 				msg := fmt.Sprintf("updating rating for '%s': %v => %v", track, tt.Rating(), track.Rating())
-				if !context.Bool(cmd.Dryrun) {
+				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
 					err := tt.SetRating(track.Rating())
 					if err != nil {

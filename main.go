@@ -8,12 +8,12 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"primetools/cmd"
+	"primetools/cmd/add"
 	"primetools/cmd/dump"
 	"primetools/cmd/fix"
 	_import "primetools/cmd/import"
 	"primetools/cmd/sync"
 	"primetools/cmd/test"
-	"primetools/pkg/options"
 )
 
 func main() {
@@ -32,15 +32,16 @@ func main() {
 			sync.Cmd(),
 			fix.Cmd(),
 			dump.Cmd(),
+			add.Cmd(),
 			_import.Cmd(),
 			test.Cmd(),
 		},
-		Before: func(context *cli.Context) error {
-			if context.Bool(cmd.Dryrun) {
-				options.SetDryRun()
-			}
-			return nil
-		},
+		// Before: func(context *cli.Context) error {
+		// 	if context.Bool(cmd.Dryrun) {
+		// 		options.SetDryRun()
+		// 	}
+		// 	return nil
+		// },
 	}
 	app.Setup()
 

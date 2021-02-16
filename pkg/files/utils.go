@@ -54,10 +54,10 @@ func Size(path string) int64 {
 	return stat.Size()
 }
 
-func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) {
+func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) error {
 	// root = filepath.ToSlash(root) + "/"
-
-	godirwalk.Walk(root, &godirwalk.Options{
+	return godirwalk.Walk(root, &godirwalk.Options{
+		FollowSymbolicLinks: false,
 		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
 			logrus.Warnf("cannot walk '%s': %v", s, err)
 			return godirwalk.SkipNode
