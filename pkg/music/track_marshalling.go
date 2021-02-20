@@ -51,7 +51,7 @@ func (t MarshalTrack) Interface() Track {
 }
 
 func (t MarshalTrack) String() string {
-	return TrackMeta(t.Interface())
+	return t.Title
 }
 
 type marshalTrackAdapter struct {

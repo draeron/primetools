@@ -2,8 +2,6 @@ package itunes
 
 import (
 	"fmt"
-	"html"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,7 +59,7 @@ func Open(path string) (music.Library, error) {
 			continue
 		}
 
-		location := normalizePath(t.Location)
+		location := files.ConvertUrlFilePath(t.Location)
 		if _, ok := i.trackByLocation[location]; ok {
 			logrus.Warnf("file '%s' seems to be duplicated in itunes xml", location)
 		}
@@ -237,13 +235,4 @@ func (i *Library) getCreateWriter() itunes_writer {
 
 func (i *Library) String() string {
 	return i.info
-}
-
-// file://localhost/m:/Techno/-=%20Ambient%20=-/Bluetech/2005%20-%20Sines%20And%20Singularities/01%20-%20Enter%20The%20Lovely.mp3
-func normalizePath(path string) string {
-	path = strings.Replace(path, "file://localhost/", "", 1)
-	path, _ = url.PathUnescape(path)
-	path = html.UnescapeString(path)
-	path = files.NormalizePath(path)
-	return path
 }

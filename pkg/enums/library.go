@@ -14,6 +14,7 @@ ENUM(
 	ITunes
 	PRIME
 	File
+	Rekordbox
 )
 
 todo: add Eventually these

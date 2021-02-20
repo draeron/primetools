@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/djherbis/times.v1"
 
+	"primetools/pkg/files"
 	"primetools/pkg/music"
 )
 
@@ -66,12 +67,7 @@ func (t *Track) SetRating(rating music.Rating) error {
 }
 
 func (t *Track) Modified() time.Time {
-	tim, err := times.Stat(t.path)
-	if err != nil {
-		logrus.Errorf("failed to get creation time for file %s: %v", t.path, err)
-		return time.Time{}
-	}
-	return tim.ModTime()
+	return files.ModifiedTime(t.path)
 }
 
 func (t *Track) SetModified(modified time.Time) error {

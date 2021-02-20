@@ -7,7 +7,7 @@ require (
 	github.com/deepakjois/gousbdrivedetector v0.0.0-20161027045320-4d29e4d6f1b7
 	github.com/dhowden/itl v0.0.0-20170329215456-9fbe21093131
 	github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a // indirect
-	github.com/draeron/itunes-win v0.2.2
+	github.com/draeron/itunes-win v0.2.3
 	github.com/gobwas/glob v0.2.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/karrick/godirwalk v1.16.1
@@ -19,6 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/sirupsen/logrus v1.7.0
+	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/urfave/cli/v2 v2.3.0
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061 // indirect

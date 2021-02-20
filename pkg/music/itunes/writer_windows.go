@@ -78,7 +78,7 @@ func (w *writer_windows) load() {
 			logrus.Errorf("track.GetLocation: %v", err)
 			continue
 		}
-		w.tracks[normalizePath(loc)] = track
+		w.tracks[files.NormalizePath(loc)] = track
 	}
 
 	logrus.Infof("iTunes COM data loaded in %s", time.Since(start))
@@ -124,7 +124,7 @@ func (w *writer_windows) addFile(path string) (*itl.Track, error) {
 			continue
 		}
 
-		if normalizePath(loc) == files.NormalizePath(path) {
+		if files.NormalizePath(loc) == files.NormalizePath(path) {
 			name, _ := track.GetName()
 			rating, _ := track.GetRating()
 			year, _ := track.GetYear()

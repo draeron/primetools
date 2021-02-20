@@ -9,6 +9,7 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 
+	"primetools/pkg/files"
 	"primetools/pkg/music"
 )
 
@@ -39,7 +40,7 @@ func (t *Track) Rating() music.Rating {
 }
 
 func (t *Track) FilePath() string {
-	return normalizePath(t.itrack.Location)
+	return files.ConvertUrlFilePath(t.itrack.Location)
 }
 
 func (t *Track) Added() time.Time {

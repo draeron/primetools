@@ -16,14 +16,17 @@ const (
 	PRIME
 	// File is a LibraryType of type File
 	File
+	// Rekordbox is a LibraryType of type Rekordbox
+	Rekordbox
 )
 
-const _LibraryTypeName = "ITunesPRIMEFile"
+const _LibraryTypeName = "ITunesPRIMEFileRekordbox"
 
 var _LibraryTypeNames = []string{
 	_LibraryTypeName[0:6],
 	_LibraryTypeName[6:11],
 	_LibraryTypeName[11:15],
+	_LibraryTypeName[15:24],
 }
 
 // LibraryTypeNames returns a list of possible string values of LibraryType.
@@ -37,6 +40,7 @@ var _LibraryTypeMap = map[LibraryType]string{
 	0: _LibraryTypeName[0:6],
 	1: _LibraryTypeName[6:11],
 	2: _LibraryTypeName[11:15],
+	3: _LibraryTypeName[15:24],
 }
 
 // String implements the Stringer interface.
@@ -54,6 +58,8 @@ var _LibraryTypeValue = map[string]LibraryType{
 	strings.ToLower(_LibraryTypeName[6:11]):  1,
 	_LibraryTypeName[11:15]:                  2,
 	strings.ToLower(_LibraryTypeName[11:15]): 2,
+	_LibraryTypeName[15:24]:                  3,
+	strings.ToLower(_LibraryTypeName[15:24]): 3,
 }
 
 // ParseLibraryType attempts to convert a string to a LibraryType

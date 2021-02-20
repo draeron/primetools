@@ -18,8 +18,8 @@ import (
 
 func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: false,
 		ForceColors:   true,
+		DisableTimestamp: true,
 	})
 	log.SetOutput(logrus.New().Writer())
 

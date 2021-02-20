@@ -212,7 +212,7 @@ func (l *Library) Track(filename string) music.Track {
 	return nil
 }
 
-func (l *Library) Matches(track music.Track) music.Tracks {
+func (l *Library) Matches(track music.Track) (matches music.Tracks) {
 	if l.hashCache == nil {
 		start := time.Now()
 		logrus.Info("constructing track hashes from PRIME library metadata")
@@ -235,8 +235,12 @@ func (l *Library) Matches(track music.Track) music.Tracks {
 		logrus.Infof("processed %d tracks in %v", len(l.hashCache), time.Since(start))
 	}
 
-	h := music.TrackHash(track)
+	hash := music.TrackHash(track)
+	if match, ok := l.hashCache[hash]; ok {
+		matches = append(matches, match...)
+	}
 
+	h := music.TrackHash(track)
 	return l.hashCache[h]
 }
 

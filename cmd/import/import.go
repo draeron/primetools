@@ -142,9 +142,9 @@ func importList(context *cli.Context, list music.MarshallTracklist, target music
 		if len(matches) > 0 {
 			newList = append(newList, matches[0])
 		} else if opts.ignoreNotFound {
-			logrus.Warnf("failed to find a match for track %v in target library for in %s '%s'", track, opts.objType, list.Path)
+			logrus.Warnf("failed to find a match for file '%v' in target library for in %s '%s'", track, opts.objType, list.Path)
 		} else {
-			return errors.Errorf("failed to find a match for track %v in target library for in %s '%s', skipping write", track, opts.objType, list.Path)
+			return errors.Errorf("failed to find a match for track '%v' in target library for in %s '%s', skipping write", track, opts.objType, list.Path)
 		}
 	}
 

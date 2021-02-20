@@ -39,12 +39,12 @@ Et voilà! You should have a single binary called `primetools.exe`.
 
 ### Sources
 
-| Source    | Files | ITunes | PRIME |
-| --------- | ----- | ------ | ----- |
-| Rating    | [x]   | [x]    | [x]   |
-| Playlists |       | [x]    | [x]   |
-| Crates    |       |        | [x]   |
-| Time      | [x]   | [x]    | [x]   |
+| Source    | Files | ITunes | PRIME | Rekordbox |
+| --------- | ----- | ------ | ----- | --------- |
+| Rating    | [x]   | [x]    | [x]   | [x]       |
+| Playlists |       | [x]    | [x]   | [x]       |
+| Crates    |       |        | [x]   | [x]       |
+| Time      | [x]   | [x]    | [x]   | [x]       |
 
 ### Targets
 
@@ -79,11 +79,11 @@ can still use the tools to import mort of the meta data through the .plist file.
 Traktor is only supported because I can read the proper POPM id3 frame (ie:
 rating) that is used by Traktor. Meta data from NML is not implemented.
 
-#### What about _Rekorbox_ & _Serato_ ?
+#### What about _Serato_ ?
 
-Since I don't really use Rekorbox and Serato I didn't put any support but the
-code is modular enough that they could be eventually implemented. If someone
-submit a pull request for it I would gladly review and merge it.
+Since I don't really use Rekorbox and Serato but the code is modular enough that
+they could be eventually implemented. If someone submit a pull request for it I
+would gladly review and merge it.
 
 #### Known Issues
 

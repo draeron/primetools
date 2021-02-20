@@ -3,12 +3,15 @@ package files
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/karrick/godirwalk"
@@ -19,6 +22,7 @@ import (
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
+	"gopkg.in/djherbis/times.v1"
 	yamlv2 "gopkg.in/yaml.v2"
 
 	"primetools/pkg/enums"
@@ -72,6 +76,15 @@ func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) error {
 	})
 }
 
+func ModifiedTime(path string) time.Time {
+	tim, err := times.Stat(path)
+	if err != nil {
+		logrus.Errorf("failed to get creation time for file %s: %v", path, err)
+		return time.Time{}
+	}
+	return tim.ModTime()
+}
+
 func IsDir(path string) bool {
 	st, err := os.Stat(path)
 	if st == nil || err != nil {
@@ -83,6 +96,15 @@ func IsDir(path string) bool {
 func RemoveAccent(path string) string {
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 	path, _, _ = transform.String(t, path)
+	return path
+}
+
+// file://localhost/m:/Techno/-=%20Ambient%20=-/Bluetech/2005%20-%20Sines%20And%20Singularities/01%20-%20Enter%20The%20Lovely.mp3
+func ConvertUrlFilePath(path string) string {
+	path = strings.Replace(path, "file://localhost/", "", 1)
+	path, _ = url.PathUnescape(path)
+	path = html.UnescapeString(path)
+	path = NormalizePath(path)
 	return path
 }
 
