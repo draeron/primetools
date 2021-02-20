@@ -60,6 +60,16 @@ func Open(path string) (music.Library, error) {
 		}
 
 		location := files.ConvertUrlFilePath(t.Location)
+
+		if strings.Contains(t.Name, "Yeke Yeke") {
+			println("here")
+		}
+
+		if !strings.HasPrefix(t.Location, "file://") {
+			tmp := i.newTrack(t)
+			i.MoveTrack(tmp, tmp.FilePath())
+		}
+
 		if _, ok := i.trackByLocation[location]; ok {
 			logrus.Warnf("file '%s' seems to be duplicated in itunes xml", location)
 		}
@@ -143,7 +153,9 @@ func (i *Library) MoveTrack(track music.Track, newpath string) error {
 }
 
 func (i *Library) Track(filename string) music.Track {
-	if t, ok := i.trackByLocation[files.NormalizePath(filename)]; ok {
+	filename = files.NormalizePath(filename)
+	filename = files.RemoveAccent(filename)
+	if t, ok := i.trackByLocation[filename]; ok {
 		return t
 	}
 	return nil
@@ -187,9 +199,9 @@ func (i *Library) Matches(track music.Track) (matches music.Tracks) {
 func (i *Library) ForEachTrack(fct music.EachTrackFunc) error {
 	count := 0
 	for _, it := range i.trackByLocation {
-		if !strings.HasPrefix(it.itrack.Location, "file://") {
-			continue
-		}
+		// if !strings.HasPrefix(it.itrack.Location, "file://") {
+		// 	continue
+		// }
 		count++
 		if e := fct(count, len(i.trackByLocation), it); e != nil {
 			return e

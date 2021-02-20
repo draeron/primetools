@@ -12,6 +12,8 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+
+	"primetools/pkg/files"
 )
 
 type Track interface {
@@ -79,9 +81,9 @@ func IsSameFile(left Track, right Track) bool {
 func TrackHash(track Track) string {
 	hash := sha1.New()
 
-	hash.Write([]byte(track.Title()))
-	hash.Write([]byte(track.Album()))
-	hash.Write([]byte(track.Artist()))
+	hash.Write([]byte(files.RemoveAccent(track.Title())))
+	hash.Write([]byte(files.RemoveAccent(track.Album())))
+	hash.Write([]byte(files.RemoveAccent(track.Artist())))
 	hash.Write([]byte(strconv.Itoa(track.Year())))
 
 	res := hash.Sum(nil)

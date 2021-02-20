@@ -38,8 +38,8 @@ var (
 		// 	Destination: &opts.accept,
 		// },
 		&cli.BoolFlag{
-			Name:        "ignore-not-found",
-			Aliases:     []string{},
+			Name:        "ignore-missing",
+			Aliases:     []string{"i"},
 			Usage:       "Ignore track which aren't found in target, otherwise the operation will fail.",
 			Destination: &opts.ignoreNotFound,
 		},
@@ -100,7 +100,7 @@ func exec(context *cli.Context) error {
 	for _, list := range lists {
 		err = importList(context, list, target)
 		if err != nil {
-			return err
+			logrus.Errorf("failed to import '%s' '%s': %v", opts.objType, list.Path, err)
 		}
 	}
 
@@ -148,7 +148,7 @@ func importList(context *cli.Context, list music.MarshallTracklist, target music
 		}
 	}
 
-	msg := fmt.Sprintf("%s '%s' was updated from %d to %d items", opts.objType, targetList.Path(), oldCount, len(newList))
+	msg := fmt.Sprintf("%s '%s' was updated from %d => %d items", opts.objType, targetList.Path(), oldCount, len(newList))
 	if !cmd.IsDryRun(context) {
 		err = targetList.SetTracks(newList)
 		if err != nil {

@@ -199,7 +199,7 @@ OPTIONS:
    --source value, -s value         file to use as source
    --name value, -n value           Names of crate/playlist to import, can be glob (*something*), 
                                     if none is given, will import all object in dump file.
-   --ignore-not-found               Ignore track which aren't found in target, otherwise the 
+   --ignore-missing                 Ignore track which aren't found in target, otherwise the 
                                     operation will fail. (default: false)
    --dryrun, --ro                   (default: false)
 ```

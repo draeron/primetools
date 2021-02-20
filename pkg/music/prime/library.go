@@ -261,7 +261,7 @@ func (l *Library) uniqueTracks() ([]*Track, error) {
 				hash := music.TrackHash(it)
 				// ignore duplicate in sub db which already exists in the main DB since they have a reference to
 				// the origin DB
-				if dupe, ok := mape[hash]; !ok || !music.IsSameFile(dupe, it) {
+				if dupe, found := mape[hash]; !found || !music.IsSameFile(dupe, it) {
 					mape[hash] = it
 				}
 			}

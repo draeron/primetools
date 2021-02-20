@@ -78,10 +78,14 @@ func exec(context *cli.Context) error {
 			return nil
 		}
 
-		logrus.Infof("file '%s' not found in target library", osPathname)
+		if tgt.Track(osPathname) != nil {
+			// already there skip it
+			return nil
+		}
 
 		count++
 		if !cmd.IsDryRun(context) {
+			logrus.Infof("Adding '%s' to target library", osPathname)
 			track, err := tgt.AddFile(osPathname)
 
 			if err != nil {
@@ -93,6 +97,8 @@ func exec(context *cli.Context) error {
 				tmp := filelib.Track(osPathname)
 				return track.SetRating(tmp.Rating())
 			}
+		} else {
+			logrus.Infof("[DRY] would add '%s' to target library", osPathname)
 		}
 
 		return nil

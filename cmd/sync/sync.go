@@ -21,7 +21,17 @@ var (
 		cmd.TargetFlag,
 		cmd.TargetPathFlag,
 		cmd.DryrunFlag,
+		&cli.BoolFlag{
+			Name: "force",
+			Aliases: []string{"f"},
+			Usage: "force update (don't do any comparaison",
+			Destination: &opts.force,
+		},
 	}
+
+	opts = struct{
+		force bool
+	}{}
 )
 
 func Cmd() *cli.Command {
@@ -52,15 +62,16 @@ func exec(context *cli.Context) error {
 
 	start := time.Now()
 
-	err := src.ForEachTrack(func(index int, total int, track music.Track) error {
+	err := tgt.ForEachTrack(func(index int, total int, track music.Track) error {
 		count++
 
-		// if strings.Contains(track.String(), "Troja Átma") {
+		// if strings.Contains(track.FilePath(), "hunger") {
 		// 	logrus.Print(track.String())
 		// }
 
-		tt := tgt.Track(track.FilePath())
-		if tt == nil {
+		srct := src.Track(track.FilePath())
+		if srct == nil {
+			logrus.Warnf("not match found for '%s' in %v", track, cmd.SourceFlag.Value)
 			notfound++
 			return nil
 		}
@@ -72,60 +83,63 @@ func exec(context *cli.Context) error {
 
 		switch stype {
 		case enums.Modified:
-			if tt.Modified() != track.Modified() {
+			if opts.force || srct.Modified().String() != track.Modified().String() {
 				changed++
-				msg := fmt.Sprintf("updating modified for '%s': %v => %v", track, tt.Modified().Format(time.RFC822), track.Modified().Format(time.RFC822))
+				msg := fmt.Sprintf("updating modified for '%s': %v => %v", track, track.Modified().Format(time.RFC822), srct.Modified().Format(time.RFC822))
 				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
-					err := tt.SetModified(track.Modified())
+					err := track.SetModified(srct.Modified())
 					if err != nil {
+						logrus.Errorf("failed to sync modified date for '%s': %v", srct.Title(), err)
 						errorsc++
-						return err
 					}
 				} else {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
 		case enums.Added:
-			if tt.Added() != track.Added() {
+			// left := srct.Added().String()
+			// right := track.Added().String()
+			// println(left, right)
+			if opts.force || srct.Added().String() != track.Added().String() {
 				changed++
-				msg := fmt.Sprintf("updating added for '%s': %v => %v", track, tt.Added().Format(time.RFC822), track.Added().Format(time.RFC822))
+				msg := fmt.Sprintf("updating added for '%s': %v => %v", track, track.Added().Format(time.RFC822), srct.Added().Format(time.RFC822))
 				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
-					err := tt.SetAdded(track.Added())
+					err := track.SetAdded(srct.Added())
 					if err != nil {
 						errorsc++
-						return err
+						logrus.Errorf("failed to sync added date for '%s': %v", srct.Title(), err)
 					}
 				} else {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
 		case enums.PlayCount:
-			if tt.PlayCount() != track.PlayCount() {
+			if opts.force || srct.PlayCount() != track.PlayCount() {
 				changed++
-				msg := fmt.Sprintf("updating play count for '%s': %v => %v", track, tt.PlayCount(), track.PlayCount())
+				msg := fmt.Sprintf("updating play count for '%s': %v => %v", track, srct.PlayCount(), srct.PlayCount())
 				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
-					err := tt.SetPlayCount(track.PlayCount())
+					err := track.SetPlayCount(srct.PlayCount())
 					if err != nil {
 						errorsc++
-						return err
+						logrus.Errorf("failed to sync playcount for '%s': %v", srct.Title(), err)
 					}
 				} else {
 					logrus.Info("[DRY] ", msg)
 				}
 			}
 		case enums.Ratings:
-			if tt.Rating() != track.Rating() {
+			if opts.force || srct.Rating() != track.Rating() {
 				changed++
-				msg := fmt.Sprintf("updating rating for '%s': %v => %v", track, tt.Rating(), track.Rating())
+				msg := fmt.Sprintf("updating rating for '%s': %v => %v", track, track.Rating(), srct.Rating())
 				if !cmd.IsDryRun(context) {
 					logrus.Info(msg)
-					err := tt.SetRating(track.Rating())
+					err := track.SetRating(srct.Rating())
 					if err != nil {
 						errorsc++
-						return err
+						logrus.Errorf("failed to sync rating for '%s': %v", srct.Title(), err)
 					}
 				} else {
 					logrus.Info("[DRY] ", msg)

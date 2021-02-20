@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/draeron/itunes-win/itunes"
+
 	"primetools/pkg/files"
 )
 
@@ -32,6 +33,7 @@ func createWriter() (itunes_writer, error) {
 }
 
 func (w *writer_windows) close() {
+	logrus.Infof("closing iTunes COM interface")
 	w.app.Exit()
 }
 
@@ -94,9 +96,15 @@ func (w *writer_windows) addFile(path string) (*itl.Track, error) {
 		return nil, errors.Wrapf(err, "itunes.GetMainPlaylist()")
 	}
 
+	// path = filepath.ToSlash(path)
+	//
+	// if !strings.HasPrefix(path, files.URLPathPrefix) {
+	// 	path = files.URLPathPrefix + "/" + path
+	// }
+
 	op, err := lib.AddFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Playlist.AddFile()")
+		return nil, errors.Wrapf(err, "Playlist.AddFile(%s)", path)
 	}
 
 	collection, err := op.GetTracks()
@@ -176,7 +184,7 @@ func (w *writer_windows) track(pid itunes.PersistentID) (*itunes.Track, error) {
 		return nil, errors.Wrapf(err, "playlist.GetTrackByPersistentID(%s)", pid)
 	}
 
-	if track.IsNil() {
+	if track == nil || track.IsNil() {
 		return nil, errors.Errorf("not track found for pid '%s'", pid)
 	}
 
@@ -192,6 +200,9 @@ func (w *writer_windows) setLocation(pid string, path string) error {
 	track, err := w.track(ppid)
 	if err != nil {
 		return err
+	}
+	if !strings.HasPrefix(path, files.URLPathPrefix) {
+		path = files.URLPathPrefix + path
 	}
 	return track.SetLocation(path)
 }

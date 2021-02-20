@@ -28,6 +28,10 @@ import (
 	"primetools/pkg/enums"
 )
 
+const (
+	URLPathPrefix = "file://localhost/"
+)
+
 func ExpandHomePath(path string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -101,10 +105,11 @@ func RemoveAccent(path string) string {
 
 // file://localhost/m:/Techno/-=%20Ambient%20=-/Bluetech/2005%20-%20Sines%20And%20Singularities/01%20-%20Enter%20The%20Lovely.mp3
 func ConvertUrlFilePath(path string) string {
-	path = strings.Replace(path, "file://localhost/", "", 1)
+	path = strings.Replace(path, URLPathPrefix, "", 1)
 	path, _ = url.PathUnescape(path)
 	path = html.UnescapeString(path)
 	path = NormalizePath(path)
+	path = RemoveAccent(path)
 	return path
 }
 

@@ -147,6 +147,7 @@ func (t *Track) MarshalTOML() ([]byte, error) {
 func (t *Track) runQuery(fct func(sql *sqlx.DB, trackId int) error) error {
 	err := fct(t.src.sql, t.entry.Id)
 	if err != nil {
+		logrus.Errorf("%v", err)
 		return err
 	}
 	if t.isExternal() {
@@ -177,11 +178,15 @@ func writeFilepath(sql *sqlx.DB, trackId int, newpath string) error {
 
 func (t *Track) writeMetaIntCascade(meta MetaIntType, value int64) error {
 	return t.runQuery(func(sql *sqlx.DB, trackId int) error {
-		return writeMetaInt(t.src.sql, t.entry.Id, meta, value)
+		// if strings.Contains(t.String(), "Alina (Microtrauma Remix)") {
+		// 	logrus.Print(t.String())
+		// }
+		return writeMetaInt(sql, trackId, meta, value)
 	})
 }
 
 func writeMetaInt(sql *sqlx.DB, trackId int, meta MetaIntType, value int64) error {
+
 	// query := `UPDATE MetaDataInteger SET value = ? WHERE id = ? AND type = ?`
 	query := `INSERT OR REPLACE INTO MetaDataInteger (value, id, type) VALUES (?, ?, ?)`
 
