@@ -111,12 +111,14 @@ func exec(context *cli.Context) error {
 				matches := file.Matches(track)
 
 				if len(matches) > 0 {
-					logrus.Infof("found %d matching tracks", len(matches))
+					if len(matches) > 1 {
+						logrus.Infof("found %d matching tracks", len(matches))
+					}
 
 					var match music.Track
 
 					if cmd.IsDryRun(context) {
-						logrus.Infof("[DRY] would be changed to '%s'", matches[0])
+						logrus.Infof("[DRY] would be changed to '%s'", matches[0].FilePath())
 						return nil
 					}
 

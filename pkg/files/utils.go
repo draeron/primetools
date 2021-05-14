@@ -67,7 +67,9 @@ func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) error {
 	return godirwalk.Walk(root, &godirwalk.Options{
 		FollowSymbolicLinks: false,
 		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
-			logrus.Warnf("cannot walk '%s': %v", s, err)
+			if !strings.Contains(s, "System Volume Information") {
+				logrus.Warnf("cannot walk '%s': %v", s, err)
+			}
 			return godirwalk.SkipNode
 		},
 		Callback: func(osPathname string, directoryEntry *godirwalk.Dirent) error {
@@ -76,7 +78,7 @@ func WalkMusicFiles(root string, walkFunc godirwalk.WalkFunc) error {
 			}
 			return nil
 		},
-		AllowNonDirectory: true,
+		// AllowNonDirectory: true,
 	})
 }
 
@@ -108,8 +110,10 @@ func ConvertUrlFilePath(path string) string {
 	path = strings.Replace(path, URLPathPrefix, "", 1)
 	path, _ = url.PathUnescape(path)
 	path = html.UnescapeString(path)
-	path = NormalizePath(path)
-	path = RemoveAccent(path)
+	if runtime.GOOS == "windows" {
+		path = NormalizePath(path)
+	}
+	// path = RemoveAccent(path)
 	return path
 }
 

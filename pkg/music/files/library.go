@@ -110,7 +110,7 @@ func (f *FileLibrary) Matches(track music.Track) (matches music.Tracks) {
 func (f *FileLibrary) MatchInDirectory(track music.Track, dir string) (matches music.Tracks) {
 	hash := music.TrackHash(track)
 
-	logrus.Infof("scanning for music files at '%s'", dir)
+	// logrus.Infof("scanning for music files at '%s'", dir)
 
 	files.WalkMusicFiles(dir, func(path string, directoryEntry *godirwalk.Dirent) error {
 		cached := f.cache[path]

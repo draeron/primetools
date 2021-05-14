@@ -60,6 +60,7 @@ func Open(path string) (music.Library, error) {
 		}
 
 		location := files.ConvertUrlFilePath(t.Location)
+		location = files.RemoveAccent(location)
 
 		if strings.HasPrefix(t.Location, "http") {
 			// ignore URLs

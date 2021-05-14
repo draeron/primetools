@@ -75,10 +75,6 @@ func exec(context *cli.Context) error {
 		}
 
 		if tgt.Track(osPathname) != nil {
-			return nil
-		}
-
-		if tgt.Track(osPathname) != nil {
 			// already there skip it
 			return nil
 		}

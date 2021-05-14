@@ -40,7 +40,8 @@ func (t *Track) Rating() music.Rating {
 }
 
 func (t *Track) FilePath() string {
-	return files.ConvertUrlFilePath(t.itrack.Location)
+	path := files.ConvertUrlFilePath(t.itrack.Location)
+	return path
 }
 
 func (t *Track) Added() time.Time {

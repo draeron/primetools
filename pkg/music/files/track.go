@@ -85,6 +85,9 @@ func (t *Track) SetRating(rating music.Rating) error {
 	for id, framer := range tags.AllFrames() {
 		for _, it := range framer {
 			switch frame := it.(type) {
+			case id3v2.UnsynchronisedLyricsFrame:
+				frame.Encoding = enc
+				tags.AddUnsynchronisedLyricsFrame(frame)
 			case id3v2.UserDefinedTextFrame:
 				// fmt.Printf("USER:%s: %s\n", id, frame.Value)
 				frame.Encoding = enc
@@ -132,7 +135,7 @@ func (t *Track) SetPlayCount(count int) error {
 }
 
 func (t *Track) FilePath() string {
-	return t.path
+	return files.NormalizePath(t.path)
 }
 
 func (t *Track) Title() string {
