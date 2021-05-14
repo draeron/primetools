@@ -131,7 +131,7 @@ func exec(context *cli.Context) error {
 				}
 			}
 		case enums.Ratings:
-			if opts.force || srct.Rating() != track.Rating() {
+			if opts.force || srct.Rating() > track.Rating() {
 				changed++
 				msg := fmt.Sprintf("updating rating for '%s': %v => %v", track, track.Rating(), srct.Rating())
 				if !cmd.IsDryRun(context) {

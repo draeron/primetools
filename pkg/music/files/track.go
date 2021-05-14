@@ -2,9 +2,10 @@ package files
 
 import (
 	"encoding/json"
-	"log"
+	"math/big"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,10 +24,13 @@ type Track struct {
 	title  string
 	album  string
 	artist string
+	rating music.Rating
 	year   int
 	mutex  sync.Mutex
 	loaded bool
 }
+
+const TracktorEmail = "traktor@native-instruments.de"
 
 func newTrack(path string) *Track {
 	return &Track{
@@ -36,34 +40,68 @@ func newTrack(path string) *Track {
 
 func (t *Track) String() string {
 	t.readMetadata()
-	return t.title
+	if t.title == "" {
+		return t.FilePath()
+	} else {
+		return strings.Join([]string{t.artist, t.title}, " - ")
+	}
 }
 
 func (t *Track) Rating() music.Rating {
-	tags, err := id3v2.Open(t.path, id3v2.Options{})
-	if err != nil {
-		logrus.Errorf("fail to open id3 tags for file %s: %v", t.path, err)
-		return music.Zero
-	}
-	defer tags.Close()
-
-	frames := tags.GetFrames(tags.CommonID("Popularimeter"))
-	for _, f := range frames {
-		popm, ok := f.(id3v2.PopularimeterFrame)
-		if !ok {
-			log.Fatal("Couldn't assert POPM frame")
-		}
-
-		if popm.Email == "traktor@native-instruments.de" {
-			return music.Rating(popm.Rating / 51)
-		}
-	}
-	return music.Zero
+	t.readMetadata()
+	return t.rating
 }
 
 func (t *Track) SetRating(rating music.Rating) error {
-	logrus.Error("SetRating for file not implemented")
-	return nil
+	tags, err := id3v2.Open(t.path, id3v2.Options{
+		Parse: true,
+	})
+	if err != nil {
+		logrus.Errorf("fail to open id3 tags for file %s: %v", t.path, err)
+	}
+	defer tags.Close()
+
+	var popframe *id3v2.PopularimeterFrame
+
+	for _, frame := range tags.GetFrames("POPM") {
+		if popm, ok := frame.(id3v2.PopularimeterFrame); ok {
+			if popm.Email == TracktorEmail {
+				popframe = &popm
+			}
+		}
+	}
+	if popframe == nil {
+		popframe = &id3v2.PopularimeterFrame{
+			Email: TracktorEmail,
+			Counter: &big.Int{},
+		}
+	}
+	popframe.Rating = uint8(rating) * 51
+	tags.AddFrame("POPM", popframe)
+
+	tags.SetVersion(4)
+	enc := tags.DefaultEncoding()
+
+	for id, framer := range tags.AllFrames() {
+		for _, it := range framer {
+			switch frame := it.(type) {
+			case id3v2.UserDefinedTextFrame:
+				// fmt.Printf("USER:%s: %s\n", id, frame.Value)
+				frame.Encoding = enc
+				tags.AddFrame(id, frame)
+			case id3v2.CommentFrame:
+				// fmt.Printf("COMMENT:%s: %s\n", id, frame.Text)
+				frame.Encoding = enc
+				tags.AddCommentFrame(frame)
+			case id3v2.TextFrame:
+				// fmt.Printf("TEXT:%s: %s\n", id, frame.Text)
+				frame.Encoding = enc
+				tags.AddTextFrame(id, enc, frame.Text)
+			}
+		}
+	}
+
+	return tags.Save()
 }
 
 func (t *Track) Modified() time.Time {
@@ -166,6 +204,17 @@ func (t *Track) readMetadata() {
 	t.title = tags.Title()
 	t.album = tags.Album()
 	t.artist = tags.Artist()
+	if t.title == "" {
+		logrus.Warnf("file '%s' doesn't have any id3 title data", t.path)
+	}
+
+	for _, frame := range tags.GetFrames("POPM") {
+		if popm, ok := frame.(id3v2.PopularimeterFrame); ok {
+			if popm.Email == TracktorEmail {
+				t.rating = music.Rating(popm.Rating / 51)
+			}
+		}
+	}
 
 	yearstr := tags.Year()
 	if yearstr != "" && len(yearstr) >= 4 {

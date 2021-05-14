@@ -61,11 +61,10 @@ func Open(path string) (music.Library, error) {
 
 		location := files.ConvertUrlFilePath(t.Location)
 
-		if strings.Contains(t.Name, "Yeke Yeke") {
-			println("here")
-		}
-
-		if !strings.HasPrefix(t.Location, "file://") {
+		if strings.HasPrefix(t.Location, "http") {
+			// ignore URLs
+			continue
+		} else if !strings.HasPrefix(t.Location, "file://") {
 			tmp := i.newTrack(t)
 			i.MoveTrack(tmp, tmp.FilePath())
 		}
