@@ -114,6 +114,10 @@ func (t *TrackList) SetTracks(tracks music.Tracks) error {
 	return nil
 }
 
+func (t TrackList) Count() int {
+	return t.entry.TrackCount
+}
+
 func (t *TrackList) Tracks() music.Tracks {
 	tracks := []trackEntry{}
 	query := `select * from ListTrackList join Track ON Track.id = ListTrackList.trackId WHERE listId = ? ORDER BY trackNumber`

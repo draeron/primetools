@@ -8,6 +8,7 @@ type Tracklist interface {
 	Name() string
 	Path() string
 	Tracks() Tracks
+	Count() int
 
 	SetTracks(Tracks) error
 }

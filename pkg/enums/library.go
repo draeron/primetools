@@ -9,17 +9,18 @@ import (
 
 //go:generate go-enum -f=$GOFILE --marshal --names --lower --noprefix --sql
 
+// todo: add Eventually these
+//	Traktor
+//  Serato
+
 /*
 ENUM(
 	ITunes
 	PRIME
 	File
 	Rekordbox
+	EngineDJ
 )
-
-todo: add Eventually these
-	Traktor
-  Serato
 */
 type LibraryType int
 

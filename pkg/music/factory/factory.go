@@ -5,6 +5,7 @@ import (
 
 	"primetools/pkg/enums"
 	"primetools/pkg/music"
+	"primetools/pkg/music/enginedj"
 	"primetools/pkg/music/files"
 	"primetools/pkg/music/itunes"
 	"primetools/pkg/music/prime"
@@ -24,6 +25,8 @@ func Open(libtype enums.LibraryType, path string) (music.Library, error) {
 		return files.Open(path), nil
 	case enums.Rekordbox:
 		return rekordbox.Open(path)
+	case enums.EngineDJ:
+		return enginedj.Open(path)
 	default:
 		return nil, errors.Errorf("invalid library type: %v", libtype)
 	}

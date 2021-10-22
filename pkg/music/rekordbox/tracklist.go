@@ -14,6 +14,10 @@ type TrackList struct {
 	xml XmlPlaylistNode
 }
 
+func (t *TrackList) Count() int {
+	return len(t.xml.Tracks)
+}
+
 func (t *TrackList) Name() string {
 	return t.xml.Name
 }

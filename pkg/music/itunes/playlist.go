@@ -41,6 +41,10 @@ func (p Playlist) Tracks() music.Tracks {
 	return out
 }
 
+func (p Playlist) Count() int {
+	return len(p.Tracks())
+}
+
 func (p Playlist) SetTracks(tracks music.Tracks) error {
 	return errors.New("writing playlist content not supported on ITunes library")
 }

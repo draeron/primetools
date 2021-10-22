@@ -5,28 +5,32 @@ package enums
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"strings"
 )
 
 const (
-	// ITunes is a LibraryType of type ITunes
+	// ITunes is a LibraryType of type ITunes.
 	ITunes LibraryType = iota
-	// PRIME is a LibraryType of type PRIME
+	// PRIME is a LibraryType of type PRIME.
 	PRIME
-	// File is a LibraryType of type File
+	// File is a LibraryType of type File.
 	File
-	// Rekordbox is a LibraryType of type Rekordbox
+	// Rekordbox is a LibraryType of type Rekordbox.
 	Rekordbox
+	// EngineDJ is a LibraryType of type EngineDJ.
+	EngineDJ
 )
 
-const _LibraryTypeName = "ITunesPRIMEFileRekordbox"
+const _LibraryTypeName = "ITunesPRIMEFileRekordboxEngineDJ"
 
 var _LibraryTypeNames = []string{
 	_LibraryTypeName[0:6],
 	_LibraryTypeName[6:11],
 	_LibraryTypeName[11:15],
 	_LibraryTypeName[15:24],
+	_LibraryTypeName[24:32],
 }
 
 // LibraryTypeNames returns a list of possible string values of LibraryType.
@@ -41,6 +45,7 @@ var _LibraryTypeMap = map[LibraryType]string{
 	1: _LibraryTypeName[6:11],
 	2: _LibraryTypeName[11:15],
 	3: _LibraryTypeName[15:24],
+	4: _LibraryTypeName[24:32],
 }
 
 // String implements the Stringer interface.
@@ -60,6 +65,8 @@ var _LibraryTypeValue = map[string]LibraryType{
 	strings.ToLower(_LibraryTypeName[11:15]): 2,
 	_LibraryTypeName[15:24]:                  3,
 	strings.ToLower(_LibraryTypeName[15:24]): 3,
+	_LibraryTypeName[24:32]:                  4,
+	strings.ToLower(_LibraryTypeName[24:32]): 4,
 }
 
 // ParseLibraryType attempts to convert a string to a LibraryType
@@ -86,26 +93,72 @@ func (x *LibraryType) UnmarshalText(text []byte) error {
 	return nil
 }
 
+var _LibraryTypeErrNilPtr = errors.New("value pointer is nil") // one per type for package clashes
+
 // Scan implements the Scanner interface.
-func (x *LibraryType) Scan(value interface{}) error {
-	var name string
-
-	switch v := value.(type) {
-	case string:
-		name = v
-	case []byte:
-		name = string(v)
-	case nil:
+func (x *LibraryType) Scan(value interface{}) (err error) {
+	if value == nil {
 		*x = LibraryType(0)
-		return nil
+		return
 	}
 
-	tmp, err := ParseLibraryType(name)
-	if err != nil {
-		return err
+	// A wider range of scannable types.
+	// driver.Value values at the top of the list for expediency
+	switch v := value.(type) {
+	case int64:
+		*x = LibraryType(v)
+	case string:
+		*x, err = ParseLibraryType(v)
+	case []byte:
+		*x, err = ParseLibraryType(string(v))
+	case LibraryType:
+		*x = v
+	case int:
+		*x = LibraryType(v)
+	case *LibraryType:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = *v
+	case uint:
+		*x = LibraryType(v)
+	case uint64:
+		*x = LibraryType(v)
+	case *int:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = LibraryType(*v)
+	case *int64:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = LibraryType(*v)
+	case float64: // json marshals everything as a float64 if it's a number
+		*x = LibraryType(v)
+	case *float64: // json marshals everything as a float64 if it's a number
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = LibraryType(*v)
+	case *uint:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = LibraryType(*v)
+	case *uint64:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x = LibraryType(*v)
+	case *string:
+		if v == nil {
+			return _LibraryTypeErrNilPtr
+		}
+		*x, err = ParseLibraryType(*v)
 	}
-	*x = tmp
-	return nil
+
+	return
 }
 
 // Value implements the driver Valuer interface.

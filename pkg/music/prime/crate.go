@@ -101,3 +101,7 @@ func (c *Crate) Tracks() music.Tracks {
 	}
 	return tracks
 }
+
+func (c *Crate) Count() int {
+	return len(c.Tracks())
+}
