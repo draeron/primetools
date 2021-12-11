@@ -1,6 +1,8 @@
 package factory
 
 import (
+	"primetools/pkg/music/traktor"
+
 	"github.com/pkg/errors"
 
 	"primetools/pkg/enums"
@@ -27,6 +29,8 @@ func Open(libtype enums.LibraryType, path string) (music.Library, error) {
 		return rekordbox.Open(path)
 	case enums.EngineDJ:
 		return enginedj.Open(path)
+	case enums.Traktor:
+		return traktor.Open(path)
 	default:
 		return nil, errors.Errorf("invalid library type: %v", libtype)
 	}

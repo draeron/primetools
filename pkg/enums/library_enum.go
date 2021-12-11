@@ -21,9 +21,11 @@ const (
 	Rekordbox
 	// EngineDJ is a LibraryType of type EngineDJ.
 	EngineDJ
+	// Traktor is a LibraryType of type Traktor.
+	Traktor
 )
 
-const _LibraryTypeName = "ITunesPRIMEFileRekordboxEngineDJ"
+const _LibraryTypeName = "ITunesPRIMEFileRekordboxEngineDJTraktor"
 
 var _LibraryTypeNames = []string{
 	_LibraryTypeName[0:6],
@@ -31,6 +33,7 @@ var _LibraryTypeNames = []string{
 	_LibraryTypeName[11:15],
 	_LibraryTypeName[15:24],
 	_LibraryTypeName[24:32],
+	_LibraryTypeName[32:39],
 }
 
 // LibraryTypeNames returns a list of possible string values of LibraryType.
@@ -46,6 +49,7 @@ var _LibraryTypeMap = map[LibraryType]string{
 	2: _LibraryTypeName[11:15],
 	3: _LibraryTypeName[15:24],
 	4: _LibraryTypeName[24:32],
+	5: _LibraryTypeName[32:39],
 }
 
 // String implements the Stringer interface.
@@ -67,6 +71,8 @@ var _LibraryTypeValue = map[string]LibraryType{
 	strings.ToLower(_LibraryTypeName[15:24]): 3,
 	_LibraryTypeName[24:32]:                  4,
 	strings.ToLower(_LibraryTypeName[24:32]): 4,
+	_LibraryTypeName[32:39]:                  5,
+	strings.ToLower(_LibraryTypeName[32:39]): 5,
 }
 
 // ParseLibraryType attempts to convert a string to a LibraryType

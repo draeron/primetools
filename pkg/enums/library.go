@@ -20,6 +20,7 @@ ENUM(
 	File
 	Rekordbox
 	EngineDJ
+	Traktor
 )
 */
 type LibraryType int
