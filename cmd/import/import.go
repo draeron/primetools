@@ -107,8 +107,13 @@ func exec(context *cli.Context) error {
 	return nil
 }
 
-func importList(context *cli.Context, list music.MarshallTracklist, target music.Library) error {
+func importList(context *cli.Context, list music.MarshallTracklist, lib music.Library) error {
 	var err error
+
+	target, ok := lib.(music.LibraryEditor)
+	if !ok {
+		return errors.Errorf("library type %s doesn't support edition", )
+	}
 
 	if !opts.rules.Match(list.Path) {
 		logrus.Infof("%s '%s' doesn't match any rule, skipping", opts.objType, list.Path)

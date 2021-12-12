@@ -2,20 +2,22 @@ package traktor
 
 import (
 	"encoding/json"
+	"os"
+	"strconv"
 	"time"
 
-	"primetools/pkg/files"
 	"primetools/pkg/music"
 
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type Track struct {
 	xml XmlTrack
 }
 
-func newTrack(src XmlTrack) music.Track {
+func newTrack(src XmlTrack) *Track {
 	return &Track{src}
 }
 
@@ -32,7 +34,7 @@ func (t Track) Artist() string {
 }
 
 func (t Track) Year() int {
-	return time.Time(t.xml.ModifiedDate).Year()
+	return t.Modified().Year()
 }
 
 func (t Track) Rating() music.Rating {
@@ -44,9 +46,20 @@ func (t Track) SetRating(rating music.Rating) error {
 }
 
 func (t Track) Modified() time.Time {
-	date := time.Time(t.xml.ModifiedDate)
-	date.Add(time.Duration(t.xml.ModifiedTime))
-	return date
+	modified, err := time.Parse("2006/1/2", t.xml.ModifiedDate)
+	if err == nil {
+		seconds, err := strconv.ParseInt(t.xml.ModifiedTime, 10, 32)
+		if err != nil {
+			modified = modified.Add(time.Second * time.Duration(seconds))
+		}
+		return modified
+	} else {
+		stat, err := os.Stat(t.FilePath())
+		if err == nil {
+			return stat.ModTime()
+		}
+	}
+	return time.Now()
 }
 
 func (t Track) SetModified(modified time.Time) error {
@@ -54,7 +67,11 @@ func (t Track) SetModified(modified time.Time) error {
 }
 
 func (t Track) Added() time.Time {
-	return time.Time(t.xml.Info.ImportDate)
+	date, err := time.Parse(DateFormat, t.xml.Info.ImportDate)
+	if err != nil {
+		logrus.Warnf("failed to parse import date '%s'", t.xml.Info.ImportDate)
+	}
+	return date
 }
 
 func (t Track) SetAdded(added time.Time) error {
@@ -70,7 +87,7 @@ func (t Track) SetPlayCount(count int) error {
 }
 
 func (t Track) FilePath() string {
-	return files.ConvertUrlFilePath(t.xml.Filepath())
+	return t.xml.Filepath()
 }
 
 func (t Track) Size() int64 {

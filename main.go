@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"primetools/cmd/export"
+
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
@@ -18,7 +20,7 @@ import (
 
 func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{
-		ForceColors:   true,
+		ForceColors:      true,
 		DisableTimestamp: true,
 	})
 	log.SetOutput(logrus.New().Writer())
@@ -35,6 +37,7 @@ func main() {
 			add.Cmd(),
 			_import.Cmd(),
 			test.Cmd(),
+			export.Cmd(),
 		},
 		// Before: func(context *cli.Context) error {
 		// 	if context.Bool(cmd.Dryrun) {

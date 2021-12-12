@@ -2,15 +2,17 @@ package traktor
 
 import (
 	"encoding/xml"
+	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
 	"primetools/pkg/files"
+	"primetools/pkg/music"
 
 	"github.com/pkg/errors"
 )
+
+const DateFormat = "2006/1/2"
 
 type XmlLibrary struct {
 	XMLName xml.Name `xml:"NML"`
@@ -57,9 +59,9 @@ type XmlLibrary struct {
 </ENTRY>
 */
 type XmlTrack struct {
-	ModifiedDate XmlDate `xml:"MODIFIED_DATE,attr"`
-	ModifiedTime XmlTime `xml:"MODIFIED_TIME,attr"`
-	AudioId      []byte  `xml:"AUDIO_ID,attr"`
+	ModifiedDate string `xml:"MODIFIED_DATE,attr"`
+	ModifiedTime string `xml:"MODIFIED_TIME,attr"`
+	AudioId      []byte `xml:"AUDIO_ID,attr"`
 
 	Title  string `xml:"TITLE,attr"`
 	Artist string `xml:"ARTIST,attr"`
@@ -90,8 +92,8 @@ type XmlTrack struct {
 		Playtime    int     `xml:"PLAYTIME,attr"`
 		PlaytimeF   float32 `xml:"PLAYTIME_FLOAT,attr"`
 		Ranking     int     `xml:"RANKING,attr"`
-		ImportDate  XmlDate `xml:"IMPORT_DATE,attr"`
-		LastPlayed  XmlDate `xml:"LAST_PLAYED,attr"`
+		ImportDate  string  `xml:"IMPORT_DATE,attr"`
+		LastPlayed  string  `xml:"LAST_PLAYED,attr"`
 		Flags       string  `xml:"FLAGS,attr"`
 		FileSize    int64   `xml:"FILESIZE,attr"`
 	} `xml:"INFO"`
@@ -178,27 +180,42 @@ type XmlPlaylistEntries struct {
 // 	return
 // }
 
-type XmlDate time.Time
-type XmlTime time.Duration
-
-func (x *XmlTime) UnmarshalXMLAttr(attr xml.Attr) error {
-	seconds, err := strconv.ParseInt(attr.Value, 10, 32)
-
+func (x *XmlTrack) CopyFromTrack(track music.Track) error {
+	filestats, err := os.Stat(track.FilePath())
 	if err != nil {
-		return errors.WithMessagef(err, "failed to parsed time '%s' from xml", attr.Value)
+		return errors.Errorf("failed to fetch file info for '%s'", track.FilePath())
 	}
 
-	*x = XmlTime(time.Duration(seconds) * time.Second)
-	return nil
-}
+	x.Title = track.Title()
+	x.Album.Title = track.Album()
+	x.Artist = track.Artist()
+	x.ModifiedDate = track.Modified().Format(DateFormat)
+	// x.Cue = []bytes()
+	// x.AudioId = ""
 
-func (x *XmlDate) UnmarshalXMLAttr(attr xml.Attr) error {
-	parse, err := time.Parse("2006/1/2", attr.Value)
+	// x.Loudness.AnalyzedDB =
+	// x.Loudness.PeakDB =
+	// x.Loudness.PerceivedDB =
+	// x.Modification.AuthorType =
+	// x.Tempo.BPM = track.be
+	// x.Tempo.BPMQuality = 100
 
-	if err != nil {
-		return errors.WithMessagef(err, "failed to parsed date '%s' from xml", attr.Value)
-	}
+	x.Location.Directory = filepath.Dir(track.FilePath())
+	x.Location.Directory = strings.Replace(x.Location.Directory, "/", "/:", -1)
+	x.Location.File = filepath.Base(track.FilePath())
+	// x.Location.Volume = ""
+	// x.Location.VolumeID = ""
 
-	*x = XmlDate(parse)
+	x.Info.PlayCount = track.PlayCount()
+	x.Info.FileSize = filestats.Size()
+	x.Info.Ranking = int(track.Rating()) * 51
+	x.Info.ImportDate = track.Added().Format(DateFormat)
+	// x.Info.Key = track.Key()
+	// x.Info.Genre = track.Genre()
+	// x.Info.Comment = track.Comment()
+	// x.Info.Bitrate = track.Bitrate()
+	// x.Info.Playtime
+	// x.Info.PlaytimeF
+
 	return nil
 }

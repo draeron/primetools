@@ -35,3 +35,12 @@ func Open(libtype enums.LibraryType, path string) (music.Library, error) {
 		return nil, errors.Errorf("invalid library type: %v", libtype)
 	}
 }
+
+func Create(libtype enums.LibraryType, path string) (music.Library, error) {
+	switch libtype {
+	case enums.Traktor:
+		return traktor.Create(path)
+	default:
+		return nil, errors.Errorf("cannot create library type: %v", libtype)
+	}
+}

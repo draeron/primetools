@@ -91,7 +91,9 @@ func SubCmds(namenames []string, action cli.ActionFunc, flags []cli.Flag, extra 
 	return
 }
 
-func open(context *cli.Context, flag string, pathflag string) music.Library {
+type opFunc func(libtype enums.LibraryType, path string) (music.Library, error)
+
+func open(context *cli.Context, flag string, pathflag string, op opFunc) music.Library {
 	if context.String(flag) == "" {
 		logrus.Errorf("--%s cannot be empty", flag)
 		logrus.Exit(1)
@@ -103,7 +105,7 @@ func open(context *cli.Context, flag string, pathflag string) music.Library {
 		logrus.Exit(1)
 	}
 
-	lib, err := factory.Open(ltype, context.String(pathflag))
+	lib, err := op(ltype, context.String(pathflag))
 	if err != nil {
 		logrus.Errorf("fail to open %s: %v", flag, err)
 		logrus.Exit(1)
@@ -112,11 +114,15 @@ func open(context *cli.Context, flag string, pathflag string) music.Library {
 }
 
 func OpenTarget(context *cli.Context) music.Library {
-	return open(context, Target, TargetPath)
+	return open(context, Target, TargetPath, factory.Open)
+}
+
+func CreateTarget(context *cli.Context) music.Library {
+	return open(context, Target, TargetPath, factory.Create)
 }
 
 func OpenSource(context *cli.Context) music.Library {
-	return open(context, Source, SourcePath)
+	return open(context, Source, SourcePath, factory.Open)
 }
 
 func (r *RuleSlice) Compile() error {

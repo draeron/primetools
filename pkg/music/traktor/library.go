@@ -15,8 +15,19 @@ import (
 
 type Library struct {
 	xml        XmlLibrary
-	info       string
 	pathHashes map[string]*XmlTrack
+	path       string
+}
+
+func Create(path string) (music.Library, error) {
+	lib := &Library{
+		path:       path,
+		pathHashes: map[string]*XmlTrack{},
+	}
+	lib.xml.Version = "19"
+	lib.xml.Header.Program = "Traktor"
+	lib.xml.Header.Company = "www.native-instruments.com"
+	return lib, nil
 }
 
 func Open(path string) (music.Library, error) {
@@ -41,7 +52,6 @@ func Open(path string) (music.Library, error) {
 
 	lib := &Library{
 		xml:        xmllib,
-		info:       fmt.Sprintf("%v: Version: %v, Company: %s, Track Count: %d", xmllib.Header.Program, xmllib.Version, xmllib.Header.Company, xmllib.Collection.Count),
 		pathHashes: map[string]*XmlTrack{},
 	}
 
@@ -57,12 +67,14 @@ func Open(path string) (music.Library, error) {
 func (l Library) Close() {}
 
 func (l Library) Track(filename string) music.Track {
-	filename = files.NormalizePath(filename)
+	return l.track(filename)
+}
 
+func (l Library) track(filename string) *Track {
+	filename = files.NormalizePath(filename)
 	if track, ok := l.pathHashes[filename]; ok && track != nil {
 		return newTrack(*track)
 	}
-
 	return nil
 }
 
@@ -77,22 +89,8 @@ func (l Library) Playlists() []music.Tracklist {
 }
 
 func (l Library) Crates() []music.Tracklist {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (l Library) CreatePlaylist(path string) (music.Tracklist, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (l Library) CreateCrate(path string) (music.Tracklist, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (l Library) MoveTrack(track music.Track, newpath string) error {
-	return errors.New("not supported")
+	logrus.Warn("traktor library doesn't have any crates")
+	return nil
 }
 
 func (l Library) ForEachTrack(fct music.EachTrackFunc) error {
@@ -104,15 +102,6 @@ func (l Library) ForEachTrack(fct music.EachTrackFunc) error {
 	return nil
 }
 
-func (l Library) AddFile(path string) (music.Track, error) {
-	return nil, errors.New("not supported")
-}
-
-func (l Library) SupportedExtensions() music.FileExtensions {
-	// import not supported
-	return music.FileExtensions{}
-}
-
 func (l Library) String() string {
-	return l.info
+	return fmt.Sprintf("%v: Version: %v, Company: %s, Track Count: %d", l.xml.Header.Program, l.xml.Version, l.xml.Header.Company, l.xml.Collection.Count)
 }

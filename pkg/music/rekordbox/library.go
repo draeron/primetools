@@ -67,10 +67,6 @@ func Open(path string) (*Library, error) {
 func (l *Library) Close() {
 }
 
-func (l *Library) AddFile(path string) (music.Track, error) {
-	return nil, errors.New("AddFile operation is not supported for rekordbox")
-}
-
 func (l *Library) Track(filename string) music.Track {
 	if track, ok := l.pathToTrack[filename]; ok {
 		return track
@@ -160,18 +156,6 @@ func (l *Library) flatten(node XmlPlaylistNode, parentName string) (lists []musi
 	return
 }
 
-func (l *Library) CreatePlaylist(path string) (music.Tracklist, error) {
-	return nil, errors.New("CreatePlaylist operation is not supported for rekordbox")
-}
-
-func (l *Library) CreateCrate(path string) (music.Tracklist, error) {
-	return nil, errors.New("CreateCrate operation is not supported for rekordbox")
-}
-
-func (l *Library) MoveTrack(track music.Track, newpath string) error {
-	return errors.New("MoveTrack operation is not supported for rekordbox")
-}
-
 func (l *Library) ForEachTrack(fct music.EachTrackFunc) error {
 	count := len(l.xml.Tracks)
 	for idx, it := range l.xml.Tracks {
@@ -182,10 +166,6 @@ func (l *Library) ForEachTrack(fct music.EachTrackFunc) error {
 		}
 	}
 	return nil
-}
-
-func (l *Library) SupportedExtensions() music.FileExtensions {
-	return music.FileExtensions{} // no import supported for now
 }
 
 func (l *Library) String() string {

@@ -3,6 +3,8 @@ package add
 import (
 	"time"
 
+	"primetools/pkg/music"
+
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -53,8 +55,13 @@ func Cmd() *cli.Command {
 }
 
 func exec(context *cli.Context) error {
-	tgt := cmd.OpenTarget(context)
-	defer tgt.Close()
+	lib := cmd.OpenTarget(context)
+	defer lib.Close()
+
+	tgt, ok := lib.(music.LibraryEditor)
+	if !ok {
+		return errors.Errorf("target library doesn't support editing")
+	}
 
 	filelib := flib.Open(opts.searchPath)
 	defer filelib.Close()
