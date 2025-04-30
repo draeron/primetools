@@ -3,6 +3,7 @@ package enginedj
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,16 +17,26 @@ import (
 )
 
 type Track struct {
-	entry       trackEntry
-	src         *EngineDJDB
-	mutex       sync.Mutex
+	entry trackEntry
+	src   *EngineDJDB
+	mutex sync.Mutex
 }
 
 func newTrack(src *EngineDJDB, entry trackEntry) *Track {
 	return &Track{
-		src:         src,
-		entry:       entry,
+		src:   src,
+		entry: entry,
 	}
+}
+
+func computeNormalizedPath(origin string, fpath string) string {
+	if !filepath.IsAbs(fpath) {
+		fpath = files.NormalizePath(origin + "/../" + fpath)
+	}
+
+	// todo : don't hardcode rebasing here
+	fpath = strings.Replace(fpath, "o:/music/", "", 1)
+	return fpath
 }
 
 func (t *Track) Rating() music.Rating {
@@ -69,11 +80,7 @@ func (t *Track) SetPlayCount(count int) error {
 }
 
 func (t *Track) FilePath() string {
-	if filepath.IsAbs(t.entry.Path.String) {
-		return t.entry.Path.String
-	} else {
-		return files.NormalizePath(t.src.origin + "/" + t.entry.Path.String)
-	}
+	return computeNormalizedPath(t.src.origin, t.entry.Path.String)
 }
 
 func (t *Track) SetPath(newpath string) error {

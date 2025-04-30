@@ -151,24 +151,21 @@ func (l *Library) CreateCrate(path string) (music.Tracklist, error) {
 }
 
 func (i *Library) SupportedExtensions() music.FileExtensions {
-	return music.FileExtensions{} // no import supported for now
-	// return []string{
-	// 	".aac",
-	// 	".aiff",
-	// 	".aif",
-	// 	".flac",
-	// 	".mp3",
-	// 	".mp4",
-	// 	".ogg",
-	// 	".wav",
-	// 	".alac",
-	// }
+	return []string{
+		".aac",
+		".aiff",
+		".aif",
+		".flac",
+		".mp3",
+		".mp4",
+		".ogg",
+		".wav",
+		".alac",
+	}
 }
 
 func (l *Library) AddFile(path string) (music.Track, error) {
-	msg := "AddFile is not implemented in Library library"
-	logrus.Warnf(msg)
-	return nil, errors.New(msg)
+	return nil, errors.New("unsupported")
 }
 
 func (l *Library) MoveTrack(track music.Track, newpath string) error {

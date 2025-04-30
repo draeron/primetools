@@ -61,6 +61,7 @@ func Open(path string) (music.Library, error) {
 
 		location := files.ConvertUrlFilePath(t.Location)
 		location = files.RemoveAccent(location)
+		location = files.RemoveDrive(location)
 
 		if strings.HasPrefix(t.Location, "http") {
 			// ignore URLs
@@ -125,7 +126,7 @@ func (i *Library) AddFile(path string) (music.Track, error) {
 
 	return &Track{
 		itrack: *track,
-		lib: i,
+		lib:    i,
 	}, nil
 }
 
@@ -155,6 +156,7 @@ func (i *Library) MoveTrack(track music.Track, newpath string) error {
 func (i *Library) Track(filename string) music.Track {
 	filename = files.NormalizePath(filename)
 	filename = files.RemoveAccent(filename)
+	filename = files.RemoveDrive(filename)
 	if t, ok := i.trackByLocation[filename]; ok {
 		return t
 	}

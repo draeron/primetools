@@ -179,10 +179,8 @@ func (l *EngineDJDB) buildIdsMap() error {
 		return errors.Wrapf(err, "failed to fetch track ids")
 	}
 	for _, e := range entries {
-		fpath := e.Path.String
-		if !filepath.IsAbs(fpath) {
-			fpath = files.NormalizePath(l.origin + "/" + fpath)
-		}
+		fpath := computeNormalizedPath(l.origin, e.Path.String)
+
 		// fpath = files.RemoveAccent(fpath)
 		if _, ok := l.trackIds[fpath]; ok {
 			logrus.Warnf("duplicate entry in sqlite for path '%s'", fpath)
@@ -197,7 +195,7 @@ func (l *EngineDJDB) Track(filename string) music.Track {
 	// 	println("qawewqeq")
 	// }
 
-	entry, ok := l.trackIds[files.RemoveAccent(filename)]
+	entry, ok := l.trackIds[files.NormalizePath(filename)]
 	if !ok {
 		return nil
 	}

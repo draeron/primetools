@@ -104,7 +104,12 @@ func exec(context *cli.Context) error {
 			return err
 		}
 
-		err = src.ForEachTrack(func(index int, total int, track music.Track) error {
+		dst, ok := src.(music.LibraryEditor)
+		if !ok {
+			return errors.New("library type %s doesn't support editing")
+		}
+
+		err = dst.ForEachTrack(func(index int, total int, track music.Track) error {
 			if !files.Exists(track.FilePath()) {
 				logrus.Warnf("file '%s' is missing from disk", track.FilePath())
 
@@ -141,7 +146,7 @@ func exec(context *cli.Context) error {
 						return errors.New("invalid match selection")
 					}
 
-					return src.MoveTrack(track, match.FilePath())
+					return dst.MoveTrack(track, match.FilePath())
 				} else {
 					logrus.Errorf("could not find a match for '%v'", track)
 				}

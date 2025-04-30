@@ -19,6 +19,7 @@ const (
 	SourcePath = "source-path"
 	TargetPath = "target-path"
 	Dryrun     = "dryrun"
+	Rating     = "rating"
 
 	Usage = "the swiss knife of Denon's Engine PRIME"
 )

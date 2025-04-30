@@ -43,19 +43,21 @@ type XmlLibrary struct {
 
 /*
 <ENTRY MODIFIED_DATE="2013/12/26" MODIFIED_TIME="72910"
-       AUDIO_ID="Ae0AERIiIzMzMzMzQzMzMzRDRVVlZVVVVmZWVVZmVlVmZmZmd3eHZmh3d2Znd3dmaHd4d2d3d3Zmdnd2ZoeHh3Z3d3Z3eIiIiIeIh4iHiIeIiIeHiYmImZiJmJmYiJiZmJZ2ZnZ4eHh4d3d4h4d3h4eHh4eHiYmIiZmJmJmZiJiZmJiYh4ZkRUVFREVVVVVVZWVkVWVlZDNFRDMyREMzMzMyMzREQzWIeIh4d3d4d3eHiIeHh4iGZ4iIiIiIiIiIeHiIiIh4iIiIiIiIiIiIiIiHiIiHh4iIhlRUVEREVEMzMzMzMyMzIyIzMzIiMjMiIiMzRDMyIzMyIREAAAAAAA=="
-       TITLE="Enter The Lovely" ARTIST="Bluetech">
-    <LOCATION DIR="/:Techno/:-= Ambient =-/:Bluetech/:2005 - Sines And Singularities/:" FILE="01 - Enter The Lovely.mp3"
-              VOLUME="M:" VOLUMEID="Stuff"></LOCATION>
-    <ALBUM TRACK="1" TITLE="Sines And Singularities"></ALBUM>
-    <MODIFICATION_INFO AUTHOR_TYPE="user"></MODIFICATION_INFO>
-    <INFO BITRATE="240000" GENRE="Chill" COMMENT="Aleph Zero" COVERARTID="067/DW1AVODG4ZIV4DGQJQJVBWUK14GB" KEY="2m"
-          PLAYCOUNT="2" PLAYTIME="494" PLAYTIME_FLOAT="493.087006" RANKING="0" IMPORT_DATE="2009/1/7"
-          LAST_PLAYED="2009/1/8" FLAGS="14" FILESIZE="14639"></INFO>
-    <TEMPO BPM="120.000000" BPM_QUALITY="100.000000"></TEMPO>
-    <LOUDNESS PEAK_DB="5.351240" PERCEIVED_DB="5.709400" ANALYZED_DB="5.709400"></LOUDNESS>
-    <MUSICAL_KEY VALUE="16"></MUSICAL_KEY>
-    <CUE_V2 NAME="AutoGrid" DISPL_ORDER="0" TYPE="4" START="155.974000" LEN="0.000000" REPEATS="-1" HOTCUE="0"></CUE_V2>
+
+	   AUDIO_ID="Ae0AERIiIzMzMzMzQzMzMzRDRVVlZVVVVmZWVVZmVlVmZmZmd3eHZmh3d2Znd3dmaHd4d2d3d3Zmdnd2ZoeHh3Z3d3Z3eIiIiIeIh4iHiIeIiIeHiYmImZiJmJmYiJiZmJZ2ZnZ4eHh4d3d4h4d3h4eHh4eHiYmIiZmJmJmZiJiZmJiYh4ZkRUVFREVVVVVVZWVkVWVlZDNFRDMyREMzMzMyMzREQzWIeIh4d3d4d3eHiIeHh4iGZ4iIiIiIiIiIeHiIiIh4iIiIiIiIiIiIiIiHiIiHh4iIhlRUVEREVEMzMzMzMyMzIyIzMzIiMjMiIiMzRDMyIzMyIREAAAAAAA=="
+	   TITLE="Enter The Lovely" ARTIST="Bluetech">
+	<LOCATION DIR="/:Techno/:-= Ambient =-/:Bluetech/:2005 - Sines And Singularities/:" FILE="01 - Enter The Lovely.mp3"
+	          VOLUME="M:" VOLUMEID="Stuff"></LOCATION>
+	<ALBUM TRACK="1" TITLE="Sines And Singularities"></ALBUM>
+	<MODIFICATION_INFO AUTHOR_TYPE="user"></MODIFICATION_INFO>
+	<INFO BITRATE="240000" GENRE="Chill" COMMENT="Aleph Zero" COVERARTID="067/DW1AVODG4ZIV4DGQJQJVBWUK14GB" KEY="2m"
+	      PLAYCOUNT="2" PLAYTIME="494" PLAYTIME_FLOAT="493.087006" RANKING="0" IMPORT_DATE="2009/1/7"
+	      LAST_PLAYED="2009/1/8" FLAGS="14" FILESIZE="14639"></INFO>
+	<TEMPO BPM="120.000000" BPM_QUALITY="100.000000"></TEMPO>
+	<LOUDNESS PEAK_DB="5.351240" PERCEIVED_DB="5.709400" ANALYZED_DB="5.709400"></LOUDNESS>
+	<MUSICAL_KEY VALUE="16"></MUSICAL_KEY>
+	<CUE_V2 NAME="AutoGrid" DISPL_ORDER="0" TYPE="4" START="155.974000" LEN="0.000000" REPEATS="-1" HOTCUE="0"></CUE_V2>
+
 </ENTRY>
 */
 type XmlTrack struct {
@@ -131,6 +133,7 @@ func (x XmlTrack) Filepath() string {
 
 /*
 <NODE TYPE="FOLDER" NAME="$ROOT">
+
 	<SUBNODES COUNT="1">
 		<NODE TYPE="PLAYLIST" NAME="all.best">
 			<PLAYLIST ENTRIES="410" TYPE="LIST" UUID="60f003a8047b46b0be356823c4f09e36">
@@ -140,6 +143,7 @@ func (x XmlTrack) Filepath() string {
 			</PLAYLIST>
 		</NODE>
 	</SUBNODES>
+
 </NODE>
 */
 type XmlPlaylistNode struct {
@@ -151,22 +155,37 @@ type XmlPlaylistNode struct {
 		Nodes []XmlPlaylistNode `xml:"NODE"`
 	} `xml:"SUBNODES"`
 
-	Playlist *struct {
-		Type    string               `xml:"TYPE,attr"`
-		Count   int                  `xml:"ENTRIES,attr"`
-		Id      string               `xml:"UUID,attr"`
-		Entries []XmlPlaylistEntries `xml:"ENTRY>PRIMARYKEY"`
-	} `xml:"PLAYLIST"`
+	Playlist *XmlPlaylist `xml:"PLAYLIST"`
+}
+
+type XmlPlaylist struct {
+	Type    string               `xml:"TYPE,attr"`
+	Count   int                  `xml:"ENTRIES,attr"`
+	Id      string               `xml:"UUID,attr"`
+	Entries []XmlPlaylistEntries `xml:"ENTRY"`
 }
 
 /*
 <ENTRY>
+
 	<PRIMARYKEY TYPE="TRACK" KEY="M:/:Techno/:-= Prog.Trance =-/:Lish/:2011 - Miles Away/:09 - Lish - Feel Good.mp3"></PRIMARYKEY>
+
 </ENTRY>
 */
 type XmlPlaylistEntries struct {
-	Type string `xml:"TYPE,attr"`
-	Key  string `xml:"KEY,attr"`
+	PrimaryKey struct {
+		Type string `xml:"TYPE,attr"`
+		Key  string `xml:"KEY,attr"`
+	} `xml:"PRIMARYKEY"`
+	ExtendedData struct {
+		Text         string `xml:",chardata"`
+		Deck         string `xml:"DECK,attr"`
+		Duration     string `xml:"DURATION,attr"`
+		ExtendedType string `xml:"EXTENDEDTYPE,attr"`
+		PlayedPublic bool   `xml:"PLAYEDPUBLIC,attr"`
+		StartDate    string `xml:"STARTDATE,attr"`
+		StartTime    string `xml:"STARTTIME,attr"`
+	} `xml:"EXTENDEDDATA"`
 }
 
 // func (x XmlPlaylistNode) toTracks(library *Library) (tracks music.Tracks) {
@@ -217,5 +236,18 @@ func (x *XmlTrack) CopyFromTrack(track music.Track) error {
 	// x.Info.Playtime
 	// x.Info.PlaytimeF
 
+	return nil
+}
+
+func (x *XmlLibrary) GetHistoryPlaylist() *XmlPlaylist {
+	for _, plnode := range x.Playlists {
+		if plnode.SubNodes != nil {
+			for _, node := range plnode.SubNodes.Nodes {
+				if node.Type == "PLAYLIST" && node.Name == "HISTORY" {
+					return node.Playlist
+				}
+			}
+		}
+	}
 	return nil
 }

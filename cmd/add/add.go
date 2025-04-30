@@ -15,6 +15,10 @@ import (
 	flib "primetools/pkg/music/files"
 )
 
+const (
+	MinimumRating = "minimum-rating"
+)
+
 var (
 	flags = []cli.Flag{
 		cmd.TargetFlag,
@@ -28,6 +32,12 @@ var (
 			Name:        "rating",
 			Usage:       "also import rating which is stored in the file",
 			Destination: &opts.rating,
+		},
+		&cli.GenericFlag{
+			Name:    MinimumRating,
+			Aliases: []string{"mr"},
+			Usage:   "Minimum rating for add operation",
+			Value:   music.Zero.ToCliGeneric(),
 		},
 		cmd.DryrunFlag,
 	}
@@ -73,6 +83,14 @@ func exec(context *cli.Context) error {
 
 	exts := tgt.SupportedExtensions()
 
+	mr, ok := context.Value(MinimumRating).(*music.Rating)
+	minRating := *mr
+
+	// if a minimum rating is set, force rating update during add ops
+	if minRating > music.Zero {
+		opts.rating = true
+	}
+
 	err := files.WalkMusicFiles(opts.searchPath, func(osPathname string, directoryEntry *godirwalk.Dirent) error {
 		scanned++
 
@@ -86,6 +104,21 @@ func exec(context *cli.Context) error {
 			return nil
 		}
 
+		filerating := music.Zero
+		if minRating > music.Zero || opts.rating {
+			track := filelib.Track(osPathname)
+			if track == nil {
+				logrus.Warnf("failed to load file '%s' from disk")
+				return nil
+			} else {
+				filerating = track.Rating()
+			}
+
+			if filerating < minRating {
+				return nil
+			}
+		}
+
 		count++
 		if !cmd.IsDryRun(context) {
 			logrus.Infof("Adding '%s' to target library", osPathname)
@@ -97,8 +130,7 @@ func exec(context *cli.Context) error {
 
 			// read rating from file and set into target lib
 			if opts.rating && track != nil {
-				tmp := filelib.Track(osPathname)
-				return track.SetRating(tmp.Rating())
+				return track.SetRating(filerating)
 			}
 		} else {
 			logrus.Infof("[DRY] would add '%s' to target library", osPathname)

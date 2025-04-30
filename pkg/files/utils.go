@@ -105,6 +105,16 @@ func RemoveAccent(path string) string {
 	return path
 }
 
+func RemoveDrive(path string) string {
+	// todo: figure out a better for this
+	tokens := strings.SplitN(path, ":/", 2)
+	if len(tokens) == 2 {
+		return tokens[1]
+	} else {
+		return path
+	}
+}
+
 // file://localhost/m:/Techno/-=%20Ambient%20=-/Bluetech/2005%20-%20Sines%20And%20Singularities/01%20-%20Enter%20The%20Lovely.mp3
 func ConvertUrlFilePath(path string) string {
 	path = strings.Replace(path, URLPathPrefix, "", 1)
@@ -118,7 +128,7 @@ func ConvertUrlFilePath(path string) string {
 }
 
 /*
-	Find the absolute path, with forward slash and on windows, with lowercase
+Find the absolute path, with forward slash and on windows, with lowercase
 */
 func NormalizePath(path string) string {
 	path, _ = filepath.Abs(path)

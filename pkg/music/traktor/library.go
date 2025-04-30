@@ -42,14 +42,12 @@ func Open(path string) (music.Library, error) {
 	defer file.Close()
 
 	decoder := xml.NewDecoder(file)
-
 	xmllib := XmlLibrary{}
 
 	err = decoder.Decode(&xmllib)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "parsing of file '%s' failed", path)
 	}
-
 	lib := &Library{
 		xml:        xmllib,
 		pathHashes: map[string]*XmlTrack{},
@@ -60,7 +58,6 @@ func Open(path string) (music.Library, error) {
 	}
 
 	logrus.Infof("sucessfully loaded traktor library in %s", time.Since(start))
-
 	return lib, nil
 }
 
